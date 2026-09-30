@@ -43,6 +43,31 @@ h1 {
   margin: 4px 0 24px;
 }
 
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 0 20px;
+  color: var(--sub);
+  font-size: 14px;
+}
+
+.connection__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c18a22;
+}
+
+.connection--connected .connection__dot {
+  background: #238636;
+}
+
+.connection--unavailable .connection__dot {
+  background: #cf3f3f;
+}
+
 .note {
   background: var(--panel);
   border: 1px solid var(--line);
