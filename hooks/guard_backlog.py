@@ -5,6 +5,7 @@ Claude(Read/Write/Edit/MultiEdit/NotebookEdit/Grep/Glob/Bash)와
 Codex(apply_patch/셸 명령) 양쪽의 tool_input 모양을 모두 흡수한다.
 """
 import os
+import sys
 
 from common import (
     config,
@@ -70,4 +71,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 다른 도구까지 막히면 안 된다.
+        print(f"⚠ guard_backlog 훅 내부 오류로 검사를 건너뜁니다: {exc}", file=sys.stderr)

@@ -7,6 +7,7 @@
 """
 import hashlib
 import os
+import sys
 
 from common import (
     PROJECT,
@@ -72,4 +73,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise  # block_stop()의 sys.exit(2) 등 의도된 종료는 그대로 통과시킨다.
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 세션 종료 자체가 막히면 안 된다.
+        print(f"⚠ stop 훅 내부 오류로 검사를 건너뜁니다: {exc}", file=sys.stderr)
