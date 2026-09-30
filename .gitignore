@@ -1,5 +1,6 @@
 # Claude / Codex 훅 상태
 hooks/.state/
+.agent/
 .claude/settings.local.json
 .codex/settings.local.json
 

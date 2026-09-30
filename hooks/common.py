@@ -29,8 +29,8 @@ for _stream in (sys.stdout, sys.stderr):
 
 # apply_patch(Codex)가 쓰는 V4A 패치 봉투 마커
 _PATCH_BEGIN = "*** Begin Patch"
-_PATCH_FILE_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$", re.M)
-_PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+)$", re.M)
+_PATCH_FILE_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$", re.MULTILINE)
+_PATCH_MOVE_RE = re.compile(r"^\*\*\* Move to: (.+)$", re.MULTILINE)
 
 
 # ---------- 입출력 ----------
@@ -155,7 +155,9 @@ def _run_raw(args, cwd=None, timeout=600):
     args = [exe, *args[1:]]
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     try:
-        p = subprocess.run(args, cwd=cwd, capture_output=True, timeout=timeout, env=env)
+        p = subprocess.run(
+            args, cwd=cwd, capture_output=True, timeout=timeout, env=env, check=False
+        )
         text = _decode_best_effort(p.stdout) + _decode_best_effort(p.stderr)
         return p.returncode, text.strip()
     except subprocess.TimeoutExpired:
