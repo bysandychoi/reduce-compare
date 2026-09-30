@@ -164,12 +164,6 @@ def main():
         return
 
     cfg = config()
-    if "--repair" in cmd:
-        repaired = current_tasks()
-        if is_git_repo():
-            commit_backlog_only("restore statuses after hook snapshot failure")
-        state_set(SNAPSHOT_KEY, repaired)
-        return
     old = state_get(SNAPSHOT_KEY)
     if old is None:
         old = tasks_of(head_file(BACKLOG) or "{}")

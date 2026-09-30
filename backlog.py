@@ -446,7 +446,6 @@ def build_parser():
     s = sub.add_parser("status", help="상태 변경 (여러 개 가능)")
     s.add_argument("ids", nargs="+", help="태스크 ID들, 마지막 값이 상태")
     s.add_argument("--force", action="store_true", help="의존 미완료여도 변경")
-    s.add_argument("--repair", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(fn=cmd_status)
 
     s = sub.add_parser("rm", aliases=["delete"], help="태스크 삭제")
