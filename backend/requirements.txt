@@ -1,0 +1,18 @@
+# 백엔드 의존성 (T011)
+fastapi>=0.115
+uvicorn[standard]>=0.32
+python-multipart>=0.0.12
+pydantic>=2.9
+
+# 데이터 처리·축소·지표
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.5
+scipy>=1.13
+umap-learn>=0.5
+matplotlib>=3.8
+
+# 개발 도구
+ruff>=0.6
+pytest>=8.0
+httpx>=0.27

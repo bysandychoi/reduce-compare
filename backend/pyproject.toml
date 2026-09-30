@@ -1,0 +1,15 @@
+[project]
+name = "reduce-compare-backend"
+version = "0.1.0"
+description = "대규모 표 데이터 축소·유사도 비교 백엔드"
+requires-python = ">=3.9"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

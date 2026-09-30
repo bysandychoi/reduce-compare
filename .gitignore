@@ -1,0 +1,27 @@
+# Claude / Codex 훅 상태
+.claude/hooks/.state/
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# 데이터 (원본 CSV는 저장소에 넣지 않음)
+sample_data/**
+!sample_data/.gitkeep
+*.csv
+*.parquet
+
+# 작업 산출물
+uploads/
+tmp/
+.DS_Store

@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    ".claude/hooks/.state": true
+  },
+  "files.associations": {
+    "backlog.json": "json"
+  },
+  "editor.rulers": [100],
+  "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" }
+}
