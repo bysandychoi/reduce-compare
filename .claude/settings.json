@@ -4,14 +4,11 @@
       {
         "matcher": "startup|resume|clear|compact",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/session_start.py\"", "timeout": 20 }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/user_prompt.py\"", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py\"",
+            "timeout": 20
+          }
         ]
       }
     ],
@@ -19,13 +16,21 @@
       {
         "matcher": "Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob|Bash",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/guard_backlog.py\"", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_backlog.py\"",
+            "timeout": 10
+          }
         ]
       },
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/task_guard.py\"", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/task_guard.py\"",
+            "timeout": 10
+          }
         ]
       }
     ],
@@ -33,27 +38,32 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/backlog_sync.py\"", "timeout": 900 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_commit.py\"",
+            "timeout": 900
+          }
         ]
       },
       {
-        "matcher": "Edit|MultiEdit|Write|NotebookEdit",
+        "matcher": "Edit|MultiEdit|Write",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/code_guard.py\"", "timeout": 150 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/code_guard.py\"",
+            "timeout": 150
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/stop.py\"", "timeout": 900 }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/session_end.py\"", "timeout": 3 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.py\"",
+            "timeout": 900
+          }
         ]
       }
     ],
@@ -61,7 +71,11 @@
       {
         "matcher": "permission_prompt",
         "hooks": [
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/hooks/notify.py\"", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/notify.py\"",
+            "timeout": 10
+          }
         ]
       }
     ]
