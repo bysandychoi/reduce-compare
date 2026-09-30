@@ -5,6 +5,7 @@ Claude Code와 Codex CLI 둘 다 같은 모양으로 호출한다 (source: start
 """
 import json
 import os
+import sys
 
 from common import PROJECT, config, current_branch, emit, git, is_git_repo, read_input
 
@@ -64,4 +65,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 세션 시작 자체가 막히면 안 된다.
+        print(f"⚠ session_start 훅 내부 오류로 안내를 건너뜁니다: {exc}", file=sys.stderr)

@@ -105,4 +105,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 예상 못한 내부 오류도 기본 정책(BLOCK)을 따른다.
+        block(f"File modification blocked:\nGuard 내부 오류로 판정할 수 없어 차단합니다: {exc}")

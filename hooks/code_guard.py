@@ -9,6 +9,7 @@
 import ast
 import os
 import re
+import sys
 
 from common import (
     PROJECT,
@@ -134,4 +135,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 파일 수정 자체가 막히면 안 된다.
+        print(f"⚠ code_guard 훅 내부 오류로 검사를 건너뜁니다: {exc}", file=sys.stderr)

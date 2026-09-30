@@ -35,4 +35,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 다른 도구까지 막히면 안 된다.
+        print(f"⚠ task_guard 훅 내부 오류로 검사를 건너뜁니다: {exc}", file=sys.stderr)

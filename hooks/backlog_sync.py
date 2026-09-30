@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shlex
+import sys
 
 from common import (
     PROJECT,
@@ -212,4 +213,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - 훅 버그로 다른 작업까지 막히면 안 된다.
+        print(f"⚠ backlog_sync 훅 내부 오류로 자동 커밋을 건너뜁니다: {exc}", file=sys.stderr)
