@@ -6,6 +6,7 @@ Claude Code와 Codex CLI 양쪽에서 같은 스크립트를 그대로 쓸 수 �
 - 설정 읽기, 명령 실행, git, 팝업, 상태 저장
 을 표준 라이브러리만으로 제공한다.
 """
+import base64
 import json
 import os
 import re
@@ -274,9 +275,12 @@ def popup(title, message, style="notification"):
             ps = ("Add-Type -AssemblyName System.Windows.Forms;"
                   f"[System.Windows.Forms.MessageBox]::Show('{message.replace(chr(39), chr(39) * 2)}',"
                   f"'{title.replace(chr(39), chr(39) * 2)}')")
+            # -Command로 직접 넘기면 Windows PowerShell이 콘솔 코드페이지로 다시 디코딩해서
+            # 한글이 깨진다. -EncodedCommand(UTF-16LE + base64)는 인코딩 왜곡 없이 그대로 전달된다.
+            encoded = base64.b64encode(ps.encode("utf-16-le")).decode("ascii")
             # DETACHED_PROCESS는 창(윈도 스테이션)까지 분리시켜 MessageBox가 안 뜨게 만든다 —
             # 콘솔 창만 숨기는 CREATE_NO_WINDOW를 쓴다.
-            subprocess.Popen(["powershell", "-NoProfile", "-STA", "-Command", ps],
+            subprocess.Popen(["powershell", "-NoProfile", "-STA", "-EncodedCommand", encoded],
                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         elif shutil.which("notify-send"):
             subprocess.Popen(["notify-send", "-u", "normal", title, message])
