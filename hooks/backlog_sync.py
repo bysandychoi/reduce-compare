@@ -15,9 +15,23 @@ import os
 import re
 import shlex
 
-from common import (PROJECT, config, current_branch, emit, extract_shell_command, git,
-                     has_remote, has_upstream, head_file, is_git_repo, quality_gate,
-                     read_input, run, state_get, state_set)
+from common import (
+    PROJECT,
+    config,
+    current_branch,
+    emit,
+    extract_shell_command,
+    git,
+    has_remote,
+    has_upstream,
+    head_file,
+    is_git_repo,
+    quality_gate,
+    read_input,
+    run,
+    state_get,
+    state_set,
+)
 
 BACKLOG = "backlog.json"
 CLI_RE = re.compile(r"(^|[\s/\"'])backlog\.py([\s\"']|$)")
@@ -82,7 +96,7 @@ def review_problems(cfg, ids, new):
             problems.append(f"- {task_id}: {review_dir}/{task_id}.review.md is missing")
             continue
         with open(path, encoding="utf-8") as stream:
-            verdicts = re.findall(r"^(?:Verdict|판정):\s*(.+?)\s*$", stream.read(), re.M)
+            verdicts = re.findall(r"^(?:Verdict|판정):\s*(.+?)\s*$", stream.read(), re.MULTILINE)
         verdict = verdicts[-1] if verdicts else "missing"
         if verdict != "PASS":
             problems.append(f"- {task_id}: latest review verdict is {verdict}")

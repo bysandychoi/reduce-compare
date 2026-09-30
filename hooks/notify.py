@@ -4,8 +4,9 @@
 승인 여부를 결정하지 않는다 (아무 decision도 내보내지 않고 조용히 끝난다) —
 이 훅은 순수 알림용이라 사람이 보던 승인 흐름을 그대로 둔다.
 """
-from common import PROJECT, config, popup, read_input
 import os
+
+from common import PROJECT, config, popup, read_input
 
 
 def build_message(data):
@@ -35,5 +36,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - notification failure must never block work
         pass

@@ -8,8 +8,19 @@
 import hashlib
 import os
 
-from common import (PROJECT, block_stop, config, emit, git, is_git_repo, popup,
-                     quality_gate, read_input, state_get, state_set)
+from common import (
+    PROJECT,
+    block_stop,
+    config,
+    emit,
+    git,
+    is_git_repo,
+    popup,
+    quality_gate,
+    read_input,
+    state_get,
+    state_set,
+)
 
 
 def fingerprint():

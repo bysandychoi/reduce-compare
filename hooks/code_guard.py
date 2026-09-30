@@ -10,7 +10,17 @@ import ast
 import os
 import re
 
-from common import PROJECT, config, emit, extract_file_paths, match_glob, read_input, rel, run, tail
+from common import (
+    PROJECT,
+    config,
+    emit,
+    extract_file_paths,
+    match_glob,
+    read_input,
+    rel,
+    run,
+    tail,
+)
 
 FUNC_TS = re.compile(r"^\s*(export\s+)?(default\s+)?(async\s+)?(function\s+(\w+)|(const|let)\s+(\w+)\s*=\s*(async\s*)?\(?[^=]*\)?\s*=>)")
 

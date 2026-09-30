@@ -6,7 +6,14 @@ Codex(apply_patch/셸 명령) 양쪽의 tool_input 모양을 모두 흡수한다
 """
 import os
 
-from common import config, emit, extract_file_paths, extract_shell_command, mentions_name, read_input
+from common import (
+    config,
+    emit,
+    extract_file_paths,
+    extract_shell_command,
+    mentions_name,
+    read_input,
+)
 
 
 def guide(cli, target):
@@ -41,11 +48,12 @@ def main():
             break
 
     # 2) Grep/Glob (Claude 전용 도구 — Codex엔 없지만 확인해서 손해 없음)
-    if not blocked:
-        if is_protected_name(ti.get("path"), names) or any(n in (ti.get("glob") or "") for n in names):
-            blocked = True
-        elif any(n in (ti.get("pattern") or "") for n in names):
-            blocked = True
+    if not blocked and (
+        is_protected_name(ti.get("path"), names)
+        or any(n in (ti.get("glob") or "") for n in names)
+        or any(n in (ti.get("pattern") or "") for n in names)
+    ):
+        blocked = True
 
     # 3) 셸 명령 (cat/sed/grep/git diff 등으로 우회 접근)
     if not blocked:

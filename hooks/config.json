@@ -34,7 +34,7 @@
 
   "task_guard": {
     "enabled": true,
-    "exempt": ["docs/tasks/**", "rules/**", ".claude/**", ".codex/**", ".vscode/**", "hooks/**", "CLAUDE.md", "AGENTS.md", "README.md", ".gitignore", "problem.md", "backlog.py"]
+    "exempt": [".agent/**", "backlog.json", "docs/tasks/**", "rules/**", ".claude/**", ".codex/**", ".vscode/**", "hooks/**", "scripts/check_task_status.py", "CLAUDE.md", "AGENTS.md", "README.md", ".gitignore", "problem.md", "backlog.py"]
   },
 
   "review": {

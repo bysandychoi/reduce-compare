@@ -23,7 +23,7 @@ import sys
 import tempfile
 import unicodedata
 
-DEFAULT_STATUSES = ["todo", "in_progress", "review", "done", "blocked", "human_required"]
+DEFAULT_STATUSES = ["todo", "in_progress", "review", "done", "blocked", "human_required", "canceled"]
 
 
 # ---------- 입출력 ----------
@@ -278,6 +278,7 @@ def cmd_add(a, data):
     data["tasks"].append(t)
     data["tasks"].sort(key=lambda x: id_num(x["id"]))
     save(a.file, data)
+    sync_active_task(a.file, [tid], a.status)
     print(f"추가됨: {tid}")
     print_task(t, data)
 
@@ -309,6 +310,32 @@ def cmd_update(a, data):
     print_task(t, data)
 
 
+def active_task_path(file_path):
+    return os.path.join(os.path.dirname(os.path.abspath(file_path)), ".agent", "active_task")
+
+
+def sync_active_task(file_path, ids, new_status):
+    """.agent/active_task를 현재 상태 전환에 맞춰 갱신한다.
+
+    in_progress로 바뀌면 그 태스크를 active로 적고, active이던 태스크가
+    다른 상태로 빠지면 비운다 (Claude/Codex 공용 Guard가 이 파일을 본다).
+    """
+    path = active_task_path(file_path)
+    if new_status == "in_progress":
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(ids[-1])
+        return
+    try:
+        with open(path, encoding="utf-8") as f:
+            current = f.read().strip()
+    except OSError:
+        return
+    if current in ids:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("")
+
+
 def cmd_status(a, data):
     _, statuses = rules(data)
     if a.status not in statuses:
@@ -323,6 +350,7 @@ def cmd_status(a, data):
                 sys.exit(f"오류: {tid}의 의존 태스크가 아직 done이 아닙니다: {', '.join(pending)} (무시하려면 --force)")
         t["status"] = a.status
     save(a.file, data)
+    sync_active_task(a.file, ids, a.status)
     print(f"{', '.join(ids)} → {a.status}")
     if a.status == "done":
         newly = [t for t in ready_tasks(data) if any(i in t["depends_on"] for i in ids)]

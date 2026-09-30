@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""PreToolUse: reject project mutation when no task is in_progress."""
-import json
-import os
+"""PreToolUse: Active Task 상태를 scripts/check_task_status.py에 위임해서 확인한다.
 
-from common import PROJECT, config, emit, extract_file_paths, match_glob, read_input, rel
+Business Rule(어떤 파일이 예외인지, active task가 in_progress인지)은 전부
+scripts/check_task_status.py에 있다 — 이 훅은 그 결과를 Claude 형식으로만 옮긴다
+(Claude Hook -> scripts/check_task_status.py -> .agent/active_task -> backlog.json).
+"""
+import sys
 
-
-def active_tasks():
-    try:
-        with open(os.path.join(PROJECT, "backlog.json"), encoding="utf-8") as stream:
-            tasks = json.load(stream).get("tasks", [])
-    except (OSError, ValueError):
-        return None
-    return [task for task in tasks if task.get("status") == "in_progress"]
+from common import (
+    PROJECT,
+    emit,
+    extract_file_paths,
+    read_input,
+    rel,
+    run,
+)
 
 
 def main():
@@ -22,27 +24,14 @@ def main():
     if not paths:
         return
 
-    guard = config().get("task_guard", {})
-    if not guard.get("enabled", True):
-        return
-    guarded = [path for path in paths
-               if not any(match_glob(path, pattern) for pattern in guard.get("exempt", []))]
-    if not guarded:
-        return
-
-    active = active_tasks()
-    if active is None or active:
-        return
-    reason = (
-        "No backlog task is in_progress, so project files cannot be changed: "
-        + ", ".join(guarded)
-        + "\nRun Task Analysis first, then `python backlog.py status <ID> in_progress`."
-    )
-    emit({"hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": "deny",
-        "permissionDecisionReason": reason,
-    }})
+    code, out = run([sys.executable, "scripts/check_task_status.py", *paths], cwd=PROJECT)
+    if code != 0:
+        reason = out.strip() or "Active Task 상태를 확인할 수 없습니다."
+        emit({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }})
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ def in_progress_tasks():
 
 
 def build_entry():
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M")
     files = uncommitted_files()
     files_line = "git 저장소 아님" if files is None else (
         f"{len(files)}개: " + ", ".join(files[:8]) + (" ..." if len(files) > 8 else "") if files else "없음")
@@ -55,5 +55,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - session logging is best effort
         pass

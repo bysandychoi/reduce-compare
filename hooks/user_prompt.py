@@ -31,5 +31,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - context decoration must not block prompts
         pass
