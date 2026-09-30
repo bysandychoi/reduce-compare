@@ -1,6 +1,7 @@
 # Claude / Codex 훅 상태
-.claude/hooks/.state/
+hooks/.state/
 .claude/settings.local.json
+.codex/settings.local.json
 
 # Python
 __pycache__/
@@ -14,6 +15,7 @@ venv/
 node_modules/
 dist/
 .vite/
+*.tsbuildinfo
 
 # 데이터 (원본 CSV는 저장소에 넣지 않음)
 sample_data/**

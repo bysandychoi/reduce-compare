@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>백로그 대시보드 (읽기 전용)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; margin: 0; padding: 16px 20px 60px;
+         background: #f6f7f9; color: #1c1e21; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: #666; font-size: 13px; margin: 0 0 16px; }
+  section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button { cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; }
+  button:hover { background: #eee; }
+  input[type=text] { padding: 6px 8px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; min-width: 220px; }
+  input[type=file] { font-size: 12px; }
+  .meta { font-size: 12px; color: #555; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; }
+  .chip b { margin-right: 4px; }
+  .chip.st-todo { border-color: #9aa; }
+  .chip.st-in_progress { background: #fff4d6; border-color: #e0b93d; }
+  .chip.st-done { background: #e2f5e6; border-color: #4caf50; }
+  .chip.st-blocked { background: #fde3e3; border-color: #e05353; }
+  .chip.st-unknown { background: #fde3e3; border-color: #e05353; font-weight: bold; }
+  .error-box { background: #fde3e3; border: 1px solid #e05353; border-radius: 6px; padding: 10px 12px; font-size: 13px; }
+  .error-box h3 { margin: 0 0 6px; font-size: 13px; }
+  .error-box ul { margin: 4px 0 0; padding-left: 18px; }
+  .empty-note { color: #777; font-size: 13px; padding: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border-bottom: 1px solid #e4e4e4; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { color: #555; font-weight: 600; background: #fafafa; position: sticky; top: 0; }
+  tr.task-row { cursor: pointer; }
+  tr.task-row:hover { background: #f2f6ff; }
+  tr.task-row.selected { background: #e7effe; }
+  .badge-warn { color: #b3261e; font-weight: bold; }
+  #detail { display: none; }
+  #detail dl { display: grid; grid-template-columns: 130px 1fr; gap: 6px 10px; font-size: 13px; margin: 0; }
+  #detail dt { color: #555; }
+  #detail dd { margin: 0; word-break: break-word; }
+  #detail pre { white-space: pre-wrap; word-break: break-word; background: #f7f7f8; border: 1px solid #e0e0e0;
+                border-radius: 6px; padding: 8px; font-size: 12px; max-height: 320px; overflow: auto; }
+  .doc-toggle { margin-top: 6px; }
+  .muted { color: #888; }
+  .log-entry { border: 1px solid #e4e4e4; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
+  .log-entry .kv { margin: 0; }
+  .log-entry .kv span.k { color: #666; margin-right: 6px; }
+  .filters label { font-size: 13px; margin-right: 4px; }
+  .filters { gap: 14px; }
+  .ref-error { color: #b3261e; }
+  .status-pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; }
+  .status-pill.st-todo { border-color: #9aa; }
+  .status-pill.st-in_progress { background: #fff4d6; border-color: #e0b93d; }
+  .status-pill.st-done { background: #e2f5e6; border-color: #4caf50; }
+  .status-pill.st-blocked { background: #fde3e3; border-color: #e05353; }
+  .status-pill.st-unknown { background: #fde3e3; border-color: #e05353; font-weight: bold; }
+  tr.task-row.row-done td:first-child { border-left: 4px solid #4caf50; }
+  tr.task-row.row-in_progress td:first-child { border-left: 4px solid #e0b93d; }
+  tr.task-row.row-blocked td:first-child { border-left: 4px solid #e05353; }
+  tr.task-row.row-todo td:first-child { border-left: 4px solid #ccc; }
+  tr.task-row.row-unknown td:first-child { border-left: 4px solid #e05353; }
+  #ganttSection { overflow: auto; }
+  #ganttWrap { max-height: 520px; overflow-y: auto; overflow-x: auto; }
+  .gantt-note { font-size: 12px; color: #777; margin: 0 0 8px; }
+  .gantt-axis { position: relative; height: 18px; margin-left: 260px; margin-bottom: 4px; font-size: 11px; color: #888; }
+  .gantt-axis span { position: absolute; top: 0; white-space: nowrap; }
+  .gantt-row { display: flex; align-items: center; height: 24px; }
+  .gantt-label { width: 260px; flex: 0 0 260px; font-size: 12px; padding-right: 8px; overflow: hidden;
+                 text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+  .gantt-label:hover { text-decoration: underline; }
+  .gantt-track { position: relative; flex: 1; height: 16px; background: repeating-linear-gradient(90deg, #eee, #eee 1px, transparent 1px, transparent 60px); }
+  .gantt-bar { position: absolute; top: 2px; height: 12px; border-radius: 3px; min-width: 3px; border: 1px solid rgba(0,0,0,.15); }
+  .gantt-bar.st-todo { background: #d7dbe0; }
+  .gantt-bar.st-in_progress { background: #e0b93d; }
+  .gantt-bar.st-done { background: #4caf50; }
+  .gantt-bar.st-blocked { background: #e05353; }
+  .gantt-bar.st-unknown { background: #e05353; }
+  .gantt-bar.cyclic { outline: 2px dashed #b3261e; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #17181a; color: #e7e7e7; }
+    section { background: #202225; border-color: #3a3b3e; }
+    th { background: #26282b; color: #bbb; }
+    td, th { border-color: #333; }
+    tr.task-row:hover { background: #26314a; }
+    tr.task-row.selected { background: #2b3a5c; }
+    input[type=text], button { background: #26282b; color: #e7e7e7; border-color: #4a4b4e; }
+    #detail pre, .log-entry { background: #1b1c1e; border-color: #3a3b3e; }
+    .chip, .status-pill { background: #2b2d30; border-color: #4a4b4e; }
+    .gantt-track { background: repeating-linear-gradient(90deg, #2b2d30, #2b2d30 1px, transparent 1px, transparent 60px); }
+    .gantt-axis { color: #999; }
+  }
+</style>
+</head>
+<body>
+<h1>백로그 대시보드 (읽기 전용)</h1>
+<p class="sub">backlog.json을 직접 읽지 않고, 브라우저에서 파일을 선택해 화면에만 표시합니다. 수정·업로드 없음.</p>
+
+<section>
+  <div class="row">
+    <button id="pickFileBtn">backlog.json 선택</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+    <button id="reloadBtn" disabled>다시 읽기</button>
+    <span class="meta" id="fileMeta">불러온 파일 없음</span>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <button id="pickDocsBtn">docs/tasks 폴더 연결 (선택)</button>
+    <input type="file" id="docsInput" webkitdirectory multiple style="display:none">
+    <span class="meta" id="docsMeta">연결된 문서 없음</span>
+  </div>
+</section>
+
+<section id="errorSection" style="display:none;"></section>
+
+<section id="emptySection" style="display:none;"></section>
+
+<section id="summarySection" style="display:none;">
+  <div class="row">
+    <span><b id="totalCount">0</b>개 전체 항목 (부모+하위 포함)</span>
+    <span>·</span>
+    <span><b id="leafCount">0</b>개 실제 실행 태스크</span>
+  </div>
+  <div class="chips" id="statusChips"></div>
+</section>
+
+<section id="filterSection" style="display:none;">
+  <div class="row filters">
+    <input type="text" id="searchInput" placeholder="ID · 제목 · 설명 검색">
+    <span id="statusFilterBoxes"></span>
+    <button id="clearFilterBtn">필터 초기화</button>
+  </div>
+</section>
+
+<section id="tableSection" style="display:none;">
+  <table>
+    <thead>
+      <tr><th>ID</th><th>에픽</th><th>상태</th><th>제목</th><th>예상(분)</th><th>의존</th></tr>
+    </thead>
+    <tbody id="taskTbody"></tbody>
+  </table>
+</section>
+
+<section id="ganttSection" style="display:none;">
+  <div class="row" style="justify-content:space-between;">
+    <h2 style="margin:0; font-size:14px;">간트 차트 (예상 일정)</h2>
+    <button id="ganttToggleBtn">접기</button>
+  </div>
+  <p class="gantt-note" id="ganttNote"></p>
+  <div id="ganttWrap">
+    <div class="gantt-axis" id="ganttAxis"></div>
+    <div id="ganttRows"></div>
+  </div>
+</section>
+
+<section id="detail"></section>
+
+<script>
+(function () {
+  "use strict";
+
+  var KNOWN_KEYS = new Set(["id", "epic", "title", "status", "description", "summary",
+    "estimate_min", "est_min", "depends_on", "deps", "acceptance_criteria", "done_when",
+    "parent", "doc", "where", "gate", "owner", "claimed_at", "updated_at", "log",
+    "done_at", "evidence"]);
+
+  var state = {
+    raw: null,          // parsed JSON as-is
+    tasks: [],          // normalized task view objects
+    byId: {},           // id -> normalized task
+    epics: [],          // {id, title}
+    epicTitle: {},       // id -> title
+    knownStatuses: ["todo", "in_progress", "done", "blocked"],
+    fileName: null,
+    fileMtime: null,
+    loadedAt: null,
+    docFiles: {},        // id -> File (<id>.md)
+    reviewFiles: {},      // id -> File (<id>.review.md)
+    docsSourceLabel: null,
+    filters: { search: "", statuses: null }, // statuses: null = all
+    selectedId: null,
+    refErrors: [],        // {taskId, field, value}
+    schedule: {},          // id -> {start, end, cyclic} (예상 일정, 실제 날짜 아님)
+    cyclicIds: [],
+    ganttExpanded: true
+  };
+
+  var STATUS_LABEL_CLASS = { todo: "st-todo", in_progress: "st-in_progress", done: "st-done", blocked: "st-blocked" };
+  function statusClass(t) {
+    return (t.status !== undefined && state.knownStatuses.includes(String(t.status)))
+      ? (STATUS_LABEL_CLASS[String(t.status)] || "st-todo") : "st-unknown";
+  }
+
+  function text(el, value) { el.textContent = value; return el; }
+  function el(tag, cls, content) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (content !== undefined) e.textContent = content;
+    return e;
+  }
+  function fallback(v, label) {
+    if (v === null || v === undefined || v === "") return label;
+    if (Array.isArray(v) && v.length === 0) return label;
+    return v;
+  }
+  function isMissing(v) {
+    return v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
+  }
+
+  // ---------- 정규화 ----------
+  function pick(t, keys) {
+    for (var i = 0; i < keys.length; i++) {
+      if (t[keys[i]] !== undefined) return t[keys[i]];
+    }
+    return undefined;
+  }
+
+  function normalizeTask(t) {
+    var depsRaw = pick(t, ["deps", "depends_on"]);
+    return {
+      raw: t,
+      id: t && t.id !== undefined && t.id !== null ? String(t.id) : "(ID 없음)",
+      epic: pick(t, ["epic"]),
+      title: pick(t, ["title"]),
+      status: pick(t, ["status"]),
+      summary: pick(t, ["summary", "description"]),
+      doneWhen: pick(t, ["done_when", "acceptance_criteria"]),
+      deps: Array.isArray(depsRaw) ? depsRaw : [],
+      parent: pick(t, ["parent"]),
+      doc: pick(t, ["doc"]),
+      where: pick(t, ["where"]),
+      estMin: pick(t, ["est_min", "estimate_min"]),
+      gate: pick(t, ["gate"]),
+      owner: pick(t, ["owner"]),
+      claimedAt: pick(t, ["claimed_at"]),
+      updatedAt: pick(t, ["updated_at"]),
+      log: pick(t, ["log"]),
+      doneAt: pick(t, ["done_at"]),
+      evidence: pick(t, ["evidence"]),
+      extra: Object.keys(t || {}).filter(function (k) { return !KNOWN_KEYS.has(k); })
+    };
+  }
+
+  function loadFromJson(data) {
+    state.raw = data;
+    state.refErrors = [];
+
+    var tasksRaw = Array.isArray(data) ? data : (data && Array.isArray(data.tasks) ? data.tasks : null);
+    var epicsRaw = (!Array.isArray(data) && data && Array.isArray(data.epics)) ? data.epics : [];
+    var rules = (!Array.isArray(data) && data && data.rules) ? data.rules : {};
+
+    state.epics = epicsRaw;
+    state.epicTitle = {};
+    epicsRaw.forEach(function (e) {
+      if (e && e.id !== undefined) state.epicTitle[String(e.id)] = e.title || "";
+    });
+
+    if (Array.isArray(rules.status_values) && rules.status_values.length) {
+      state.knownStatuses = rules.status_values.map(String);
+    } else {
+      state.knownStatuses = ["todo", "in_progress", "done", "blocked"];
+    }
+
+    if (!tasksRaw) {
+      state.tasks = [];
+      state.byId = {};
+      renderAll("backlog.json에 'tasks' 목록이 없습니다. 최상위에 배열이거나, {\"tasks\":[...]} 형태여야 합니다.");
+      return;
+    }
+    if (tasksRaw.length === 0) {
+      state.tasks = [];
+      state.byId = {};
+      renderAll("'tasks' 목록이 비어 있습니다. 아직 등록된 작업이 없습니다.");
+      return;
+    }
+
+    state.tasks = tasksRaw.map(normalizeTask);
+    state.byId = {};
+    state.tasks.forEach(function (t) { state.byId[t.id] = t; });
+
+    // 참조 무결성: 존재하지 않는 deps / parent
+    state.tasks.forEach(function (t) {
+      (t.deps || []).forEach(function (d) {
+        var dId = String(d);
+        if (!state.byId[dId]) state.refErrors.push({ taskId: t.id, field: "deps", value: dId });
+      });
+      if (t.parent !== undefined && t.parent !== null && t.parent !== "") {
+        var pId = String(t.parent);
+        if (!state.byId[pId]) state.refErrors.push({ taskId: t.id, field: "parent", value: pId });
+      }
+    });
+
+    renderAll(null);
+  }
+
+  // ---------- 렌더 ----------
+  function renderAll(emptyMessage) {
+    renderErrors();
+    renderEmpty(emptyMessage);
+    var has = state.tasks.length > 0;
+    document.getElementById("summarySection").style.display = has ? "" : "none";
+    document.getElementById("filterSection").style.display = has ? "" : "none";
+    document.getElementById("tableSection").style.display = has ? "" : "none";
+    document.getElementById("ganttSection").style.display = has ? "" : "none";
+    document.getElementById("detail").style.display = "none";
+    state.selectedId = null;
+    if (!has) return;
+    renderSummary();
+    renderStatusFilterBoxes();
+    renderTable();
+    computeSchedule();
+    renderGantt();
+  }
+
+  // ---------- 간트(예상 일정) ----------
+  function computeSchedule() {
+    var graph = {}, indeg = {};
+    state.tasks.forEach(function (t) { graph[t.id] = []; indeg[t.id] = 0; });
+    state.tasks.forEach(function (t) {
+      (t.deps || []).forEach(function (d) {
+        var dId = String(d);
+        if (state.byId[dId]) { graph[dId].push(t.id); indeg[t.id]++; }
+      });
+    });
+    var q = Object.keys(indeg).filter(function (id) { return indeg[id] === 0; }).sort();
+    var order = [];
+    var remain = Object.assign({}, indeg);
+    while (q.length) {
+      q.sort();
+      var n = q.shift();
+      order.push(n);
+      graph[n].forEach(function (m) {
+        remain[m]--;
+        if (remain[m] === 0) q.push(m);
+      });
+    }
+    var doneSet = order.reduce(function (s, id) { s[id] = true; return s; }, {});
+    var cyclicIds = state.tasks.map(function (t) { return t.id; }).filter(function (id) { return !doneSet[id]; });
+
+    var schedule = {};
+    order.forEach(function (id) {
+      var t = state.byId[id];
+      var depEnds = (t.deps || []).map(String)
+        .filter(function (d) { return schedule[d]; })
+        .map(function (d) { return schedule[d].end; });
+      var start = depEnds.length ? Math.max.apply(null, depEnds) : 0;
+      var dur = (typeof t.estMin === "number" && t.estMin > 0) ? t.estMin : 0;
+      schedule[id] = { start: start, end: start + dur, cyclic: false };
+    });
+    cyclicIds.forEach(function (id) {
+      var t = state.byId[id];
+      var dur = (typeof t.estMin === "number" && t.estMin > 0) ? t.estMin : 0;
+      schedule[id] = { start: 0, end: dur, cyclic: true };
+    });
+
+    state.schedule = schedule;
+    state.cyclicIds = cyclicIds;
+  }
+
+  function renderGantt() {
+    var wrap = document.getElementById("ganttWrap");
+    var axis = document.getElementById("ganttAxis");
+    var rowsBox = document.getElementById("ganttRows");
+    var note = document.getElementById("ganttNote");
+    wrap.style.display = state.ganttExpanded ? "" : "none";
+    document.getElementById("ganttToggleBtn").textContent = state.ganttExpanded ? "접기" : "펼치기";
+    if (!state.ganttExpanded) return;
+
+    axis.innerHTML = ""; rowsBox.innerHTML = "";
+
+    var ids = state.tasks.map(function (t) { return t.id; });
+    var totalSpan = ids.reduce(function (m, id) { return Math.max(m, state.schedule[id] ? state.schedule[id].end : 0); }, 0);
+
+    var parts = ["실제 날짜가 아니라 의존관계(deps)와 예상 소요 시간(est_min)으로 계산한 순서입니다."];
+    parts.push("전체 예상 기간(병렬 실행 가정, 최장 경로): " + fmtMinutes(totalSpan));
+    if (state.cyclicIds.length) {
+      parts.push(state.cyclicIds.length + "개 태스크는 순환 의존으로 일정 계산에서 제외됨: " + state.cyclicIds.join(", "));
+    }
+    note.textContent = parts.join(" · ");
+
+    if (totalSpan <= 0) {
+      rowsBox.appendChild(el("div", "empty-note", "예상 소요 시간(est_min)이 없어 일정을 계산할 수 없습니다."));
+      return;
+    }
+
+    var ticks = 6;
+    for (var i = 0; i <= ticks; i++) {
+      var mins = Math.round((totalSpan / ticks) * i);
+      var tick = el("span", null, fmtMinutes(mins));
+      tick.style.left = (i / ticks * 100) + "%";
+      axis.appendChild(tick);
+    }
+
+    var rows = state.tasks.slice().sort(function (a, b) {
+      var sa = state.schedule[a.id] ? state.schedule[a.id].start : 0;
+      var sb = state.schedule[b.id] ? state.schedule[b.id].start : 0;
+      return sa - sb || String(a.epic).localeCompare(String(b.epic)) || a.id.localeCompare(b.id);
+    });
+
+    rows.forEach(function (t) {
+      var sch = state.schedule[t.id] || { start: 0, end: 0, cyclic: false };
+      var row = el("div", "gantt-row");
+      var label = el("div", "gantt-label", t.id + " · " + fallback(t.title, "(제목 없음)"));
+      label.title = t.id + " " + fallback(t.title, "") + " — " + fmtMinutes(sch.start) + " ~ " + fmtMinutes(sch.end)
+        + (sch.cyclic ? " (순환 의존으로 제외됨)" : "");
+      label.addEventListener("click", function () { selectTask(t.id); });
+      row.appendChild(label);
+      var track = el("div", "gantt-track");
+      var bar = el("div", "gantt-bar " + statusClass(t) + (sch.cyclic ? " cyclic" : ""));
+      var leftPct = (sch.start / totalSpan) * 100;
+      var widthPct = Math.max(((sch.end - sch.start) / totalSpan) * 100, 0.4);
+      bar.style.left = leftPct + "%";
+      bar.style.width = widthPct + "%";
+      track.appendChild(bar);
+      row.appendChild(track);
+      rowsBox.appendChild(row);
+    });
+  }
+
+  function fmtMinutes(m) {
+    if (m < 60) return m + "분";
+    var h = Math.floor(m / 60), r = m % 60;
+    return r ? (h + "시간 " + r + "분") : (h + "시간");
+  }
+
+  function renderEmpty(message) {
+    var box = document.getElementById("emptySection");
+    if (!message) { box.style.display = "none"; box.innerHTML = ""; return; }
+    box.style.display = "";
+    box.innerHTML = "";
+    box.appendChild(el("div", "empty-note", message));
+  }
+
+  function renderErrors() {
+    var box = document.getElementById("errorSection");
+    box.innerHTML = "";
+    var errs = [];
+    state.refErrors.forEach(function (r) {
+      errs.push(r.taskId + ": 존재하지 않는 " + (r.field === "parent" ? "parent" : "deps") + " 참조 → " + r.value);
+    });
+    var unknownStatusTasks = state.tasks.filter(function (t) {
+      return t.status !== undefined && !state.knownStatuses.includes(String(t.status));
+    });
+    unknownStatusTasks.forEach(function (t) {
+      errs.push(t.id + ": 알 수 없는 상태 값 \"" + t.status + "\"");
+    });
+    if (errs.length === 0) { box.style.display = "none"; return; }
+    box.style.display = "";
+    var wrap = el("div", "error-box");
+    wrap.appendChild(el("h3", null, "검증 오류 (" + errs.length + "건) — 조용히 무시하지 않고 표시합니다"));
+    var ul = el("ul");
+    errs.forEach(function (e) { ul.appendChild(el("li", null, e)); });
+    wrap.appendChild(ul);
+    box.appendChild(wrap);
+  }
+
+  function statusCounts() {
+    var counts = {};
+    state.knownStatuses.forEach(function (s) { counts[s] = 0; });
+    var unknown = 0;
+    state.tasks.forEach(function (t) {
+      var s = t.status !== undefined ? String(t.status) : undefined;
+      if (s !== undefined && counts.hasOwnProperty(s)) counts[s]++;
+      else unknown++;
+    });
+    return { counts: counts, unknown: unknown };
+  }
+
+  function leafTaskIds() {
+    var parentIds = new Set();
+    state.tasks.forEach(function (t) {
+      if (t.parent !== undefined && t.parent !== null && t.parent !== "") parentIds.add(String(t.parent));
+    });
+    return new Set(state.tasks.filter(function (t) { return !parentIds.has(t.id); }).map(function (t) { return t.id; }));
+  }
+
+  function renderSummary() {
+    text(document.getElementById("totalCount"), String(state.tasks.length));
+    text(document.getElementById("leafCount"), String(leafTaskIds().size));
+    var chipsBox = document.getElementById("statusChips");
+    chipsBox.innerHTML = "";
+    var sc = statusCounts();
+    state.knownStatuses.forEach(function (s) {
+      var chip = el("span", "chip st-" + s);
+      chip.appendChild(el("b", null, sc.counts[s]));
+      chip.appendChild(document.createTextNode(s));
+      chipsBox.appendChild(chip);
+    });
+    if (sc.unknown > 0) {
+      var uc = el("span", "chip st-unknown");
+      uc.appendChild(el("b", null, sc.unknown));
+      uc.appendChild(document.createTextNode("알 수 없음"));
+      chipsBox.appendChild(uc);
+    }
+  }
+
+  function renderStatusFilterBoxes() {
+    var box = document.getElementById("statusFilterBoxes");
+    box.innerHTML = "";
+    var statuses = state.knownStatuses.slice();
+    var sc = statusCounts();
+    if (sc.unknown > 0) statuses.push("__unknown__");
+    statuses.forEach(function (s) {
+      var id = "flt_" + s;
+      var label = el("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.id = id; cb.checked = true; cb.dataset.status = s;
+      cb.addEventListener("change", onFilterChange);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(s === "__unknown__" ? "알 수 없음" : s));
+      box.appendChild(label);
+    });
+  }
+
+  function onFilterChange() {
+    var boxes = document.querySelectorAll("#statusFilterBoxes input[type=checkbox]");
+    var active = [];
+    boxes.forEach(function (b) { if (b.checked) active.push(b.dataset.status); });
+    state.filters.statuses = active;
+    renderTable();
+  }
+
+  function matchesFilter(t) {
+    var q = state.filters.search.trim().toLowerCase();
+    if (q) {
+      var hay = (t.id + " " + fallback(t.title, "") + " " + fallback(t.summary, "")).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    if (state.filters.statuses) {
+      var s = t.status !== undefined && state.knownStatuses.includes(String(t.status)) ? String(t.status) : "__unknown__";
+      if (state.filters.statuses.indexOf(s) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderTable() {
+    var tbody = document.getElementById("taskTbody");
+    tbody.innerHTML = "";
+    var rows = state.tasks.filter(matchesFilter);
+    if (rows.length === 0) {
+      var tr = document.createElement("tr");
+      var td = document.createElement("td");
+      td.colSpan = 6; td.className = "empty-note"; td.textContent = "조건에 맞는 태스크가 없습니다.";
+      tr.appendChild(td); tbody.appendChild(tr);
+      return;
+    }
+    rows.forEach(function (t) {
+      var sCls = statusClass(t).replace("st-", "");
+      var tr = document.createElement("tr");
+      tr.className = "task-row row-" + sCls + (t.id === state.selectedId ? " selected" : "");
+      tr.addEventListener("click", function () { selectTask(t.id); });
+      tr.appendChild(el("td", null, t.id));
+      tr.appendChild(el("td", null, t.epic !== undefined ? state.epicTitle[String(t.epic)] ? (t.epic + " " + state.epicTitle[String(t.epic)]) : String(t.epic) : "미지정"));
+      var stTd = document.createElement("td");
+      stTd.appendChild(el("span", "status-pill " + statusClass(t), fallback(t.status, "정보 없음")));
+      tr.appendChild(stTd);
+      tr.appendChild(el("td", null, fallback(t.title, "(제목 없음)")));
+      tr.appendChild(el("td", null, fallback(t.estMin, "미지정")));
+      var depTd = document.createElement("td");
+      var badDeps = state.refErrors.filter(function (r) { return r.taskId === t.id && r.field === "deps"; }).map(function (r) { return r.value; });
+      if (t.deps.length === 0) {
+        depTd.textContent = "없음";
+      } else {
+        depTd.textContent = t.deps.map(function (d) { return badDeps.includes(String(d)) ? (d + "⚠") : d; }).join(", ");
+        if (badDeps.length) depTd.classList.add("ref-error");
+      }
+      tr.appendChild(depTd);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------- 상세 ----------
+  function selectTask(id) {
+    state.selectedId = id;
+    renderTable();
+    renderDetail(state.byId[id]);
+  }
+
+  function ddRow(dl, label, valueNode) {
+    dl.appendChild(el("dt", null, label));
+    var dd = document.createElement("dd");
+    if (valueNode instanceof Node) dd.appendChild(valueNode);
+    else dd.textContent = String(valueNode);
+    dl.appendChild(dd);
+  }
+
+  function listOrNone(arr, emptyLabel) {
+    if (isMissing(arr)) return document.createTextNode(emptyLabel);
+    if (!Array.isArray(arr)) return document.createTextNode(String(arr));
+    var ul = el("ul");
+    ul.style.margin = "0"; ul.style.paddingLeft = "18px";
+    arr.forEach(function (x) { ul.appendChild(el("li", null, String(x))); });
+    return ul;
+  }
+
+  function depsNode(t) {
+    var badDeps = state.refErrors.filter(function (r) { return r.taskId === t.id && r.field === "deps"; }).map(function (r) { return r.value; });
+    if (t.deps.length === 0) return document.createTextNode("없음");
+    var ul = el("ul"); ul.style.margin = "0"; ul.style.paddingLeft = "18px";
+    t.deps.forEach(function (d) {
+      var li = el("li", null, String(d) + (badDeps.includes(String(d)) ? " — 존재하지 않는 태스크 참조" : (state.byId[String(d)] ? (" (" + state.byId[String(d)].status + ")") : "")));
+      if (badDeps.includes(String(d))) li.classList.add("ref-error");
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function parentNode(t) {
+    if (isMissing(t.parent)) return document.createTextNode("없음 (최상위 작업)");
+    var bad = state.refErrors.some(function (r) { return r.taskId === t.id && r.field === "parent"; });
+    var span = el("span", bad ? "ref-error" : null, String(t.parent) + (bad ? " — 존재하지 않는 태스크 참조" : ""));
+    return span;
+  }
+
+  function logNode(t) {
+    if (isMissing(t.log)) return document.createTextNode("기록 없음");
+    if (!Array.isArray(t.log)) {
+      var pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(t.log, null, 2);
+      return pre;
+    }
+    var wrap = document.createElement("div");
+    t.log.forEach(function (entry) {
+      var box = el("div", "log-entry");
+      if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+        Object.keys(entry).forEach(function (k) {
+          var p = el("p", "kv");
+          var kSpan = el("span", "k", k + ":");
+          p.appendChild(kSpan);
+          p.appendChild(document.createTextNode(" " + String(entry[k])));
+          box.appendChild(p);
+        });
+      } else {
+        box.textContent = String(entry);
+      }
+      wrap.appendChild(box);
+    });
+    return wrap;
+  }
+
+  function gateNode(t) {
+    if (isMissing(t.gate)) return document.createTextNode("미지정");
+    var pre = document.createElement("pre");
+    pre.textContent = (typeof t.gate === "string") ? t.gate : JSON.stringify(t.gate, null, 2);
+    var note = el("div", "muted", "(표시 전용 — 실행되지 않습니다)");
+    var wrap = document.createElement("div");
+    wrap.appendChild(pre); wrap.appendChild(note);
+    return wrap;
+  }
+
+  function docLinkNode(t) {
+    var wrap = document.createElement("div");
+    var docFile = state.docFiles[t.id];
+    var reviewFile = state.reviewFiles[t.id];
+    if (!docFile && !reviewFile) {
+      wrap.appendChild(el("div", "muted", state.docsSourceLabel
+        ? "연결된 문서 없음 (" + t.id + ".md / " + t.id + ".review.md 없음)"
+        : "문서를 보려면 위에서 docs/tasks 폴더를 선택하세요."));
+      return wrap;
+    }
+    [["작업 안내서 (" + t.id + ".md)", docFile], ["리뷰 (" + t.id + ".review.md)", reviewFile]].forEach(function (pair) {
+      var label = pair[0], file = pair[1];
+      if (!file) return;
+      var btn = el("button", "doc-toggle", label + " 보기");
+      var pre = document.createElement("pre");
+      pre.style.display = "none";
+      btn.addEventListener("click", function () {
+        if (pre.style.display === "none") {
+          if (!pre.dataset.loaded) {
+            var reader = new FileReader();
+            reader.onload = function () { pre.textContent = reader.result; pre.dataset.loaded = "1"; };
+            reader.onerror = function () { pre.textContent = "(파일을 읽을 수 없습니다)"; };
+            reader.readAsText(file);
+          }
+          pre.style.display = "";
+        } else {
+          pre.style.display = "none";
+        }
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(pre);
+    });
+    return wrap;
+  }
+
+  function renderDetail(t) {
+    var box = document.getElementById("detail");
+    box.innerHTML = "";
+    box.style.display = "";
+    if (!t) return;
+    box.appendChild(el("h2", null, t.id + " — " + fallback(t.title, "(제목 없음)")));
+    var dl = document.createElement("dl");
+    ddRow(dl, "summary", fallback(t.summary, "설명 없음"));
+    ddRow(dl, "done_when", listOrNone(t.doneWhen, "완료 기준 없음"));
+    ddRow(dl, "deps", depsNode(t));
+    ddRow(dl, "parent", parentNode(t));
+    ddRow(dl, "doc", fallback(t.doc, "미지정"));
+    ddRow(dl, "where", fallback(t.where, "미지정"));
+    ddRow(dl, "est_min", fallback(t.estMin, "미지정"));
+    ddRow(dl, "gate", gateNode(t));
+    ddRow(dl, "owner", fallback(t.owner, "미지정"));
+    ddRow(dl, "claimed_at", fallback(t.claimedAt, "정보 없음"));
+    ddRow(dl, "updated_at", fallback(t.updatedAt, "정보 없음"));
+    ddRow(dl, "log", logNode(t));
+    if (!isMissing(t.doneAt)) ddRow(dl, "done_at", String(t.doneAt));
+    if (!isMissing(t.evidence)) {
+      ddRow(dl, "evidence", Array.isArray(t.evidence) ? listOrNone(t.evidence, "") :
+        (typeof t.evidence === "object" ? (function () { var pre = document.createElement("pre"); pre.textContent = JSON.stringify(t.evidence, null, 2); return pre; })() : String(t.evidence)));
+    }
+    box.appendChild(dl);
+    var docHeader = el("h3", null, "연결된 문서");
+    docHeader.style.marginTop = "14px";
+    box.appendChild(docHeader);
+    box.appendChild(docLinkNode(t));
+    if (t.extra && t.extra.length) {
+      var extraHeader = el("h3", null, "기타 필드");
+      extraHeader.style.marginTop = "14px";
+      box.appendChild(extraHeader);
+      var pre = document.createElement("pre");
+      var obj = {};
+      t.extra.forEach(function (k) { obj[k] = t.raw[k]; });
+      pre.textContent = JSON.stringify(obj, null, 2);
+      box.appendChild(pre);
+    }
+  }
+
+  // ---------- 파일 입출력 ----------
+  function loadFile(file) {
+    state.fileName = file.name;
+    state.fileMtime = file.lastModified ? new Date(file.lastModified) : null;
+    state.loadedAt = new Date();
+    updateFileMeta();
+    document.getElementById("reloadBtn").disabled = false;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try {
+        data = JSON.parse(reader.result);
+      } catch (e) {
+        state.tasks = []; state.byId = {}; state.refErrors = [];
+        document.getElementById("summarySection").style.display = "none";
+        document.getElementById("filterSection").style.display = "none";
+        document.getElementById("tableSection").style.display = "none";
+        document.getElementById("detail").style.display = "none";
+        renderJsonError(e);
+        return;
+      }
+      loadFromJson(data);
+    };
+    reader.onerror = function () {
+      renderJsonError(new Error("파일을 읽는 중 오류가 발생했습니다."));
+    };
+    reader.readAsText(file);
+  }
+
+  function renderJsonError(e) {
+    var box = document.getElementById("errorSection");
+    box.style.display = "";
+    box.innerHTML = "";
+    var wrap = el("div", "error-box");
+    wrap.appendChild(el("h3", null, "JSON 파싱 오류"));
+    wrap.appendChild(el("div", null, "선택한 파일을 JSON으로 해석할 수 없습니다: " + e.message));
+    box.appendChild(wrap);
+    document.getElementById("emptySection").style.display = "none";
+  }
+
+  function updateFileMeta() {
+    var m = document.getElementById("fileMeta");
+    var parts = ["파일: " + state.fileName];
+    if (state.fileMtime) parts.push("파일 수정 시각: " + state.fileMtime.toLocaleString());
+    if (state.loadedAt) parts.push("불러온 시각: " + state.loadedAt.toLocaleString());
+    m.textContent = parts.join(" · ");
+  }
+
+  function loadDocsFileList(fileList) {
+    state.docFiles = {}; state.reviewFiles = {};
+    var files = Array.prototype.slice.call(fileList);
+    files.forEach(function (f) {
+      var name = f.name;
+      var mReview = name.match(/^(.+)\.review\.md$/);
+      var mDoc = !mReview && name.match(/^(.+)\.md$/);
+      if (mReview) state.reviewFiles[mReview[1]] = f;
+      else if (mDoc) state.docFiles[mDoc[1]] = f;
+    });
+    state.docsSourceLabel = files.length ? (files[0].webkitRelativePath ? files[0].webkitRelativePath.split("/")[0] : "선택한 파일") : null;
+    var count = Object.keys(state.docFiles).length + Object.keys(state.reviewFiles).length;
+    document.getElementById("docsMeta").textContent = files.length
+      ? ("연결됨: " + files.length + "개 파일 중 " + count + "개가 <ID>.md 형식과 일치")
+      : "연결된 문서 없음";
+    if (state.selectedId) renderDetail(state.byId[state.selectedId]);
+  }
+
+  // ---------- 이벤트 ----------
+  document.getElementById("pickFileBtn").addEventListener("click", function () {
+    document.getElementById("fileInput").click();
+  });
+  document.getElementById("fileInput").addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+  });
+  document.getElementById("reloadBtn").addEventListener("click", function () {
+    document.getElementById("fileInput").click();
+  });
+  document.getElementById("pickDocsBtn").addEventListener("click", function () {
+    document.getElementById("docsInput").click();
+  });
+  document.getElementById("docsInput").addEventListener("change", function (e) {
+    loadDocsFileList(e.target.files);
+  });
+  document.getElementById("searchInput").addEventListener("input", function (e) {
+    state.filters.search = e.target.value;
+    renderTable();
+  });
+  document.getElementById("clearFilterBtn").addEventListener("click", function () {
+    document.getElementById("searchInput").value = "";
+    state.filters.search = "";
+    document.querySelectorAll("#statusFilterBoxes input[type=checkbox]").forEach(function (b) { b.checked = true; });
+    state.filters.statuses = null;
+    renderTable();
+  });
+  document.getElementById("ganttToggleBtn").addEventListener("click", function () {
+    state.ganttExpanded = !state.ganttExpanded;
+    renderGantt();
+  });
+})();
+</script>
+</body>
+</html>

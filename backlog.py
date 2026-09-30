@@ -23,7 +23,7 @@ import sys
 import tempfile
 import unicodedata
 
-DEFAULT_STATUSES = ["todo", "in_progress", "done", "blocked"]
+DEFAULT_STATUSES = ["todo", "in_progress", "review", "done", "blocked", "human_required"]
 
 
 # ---------- 입출력 ----------
@@ -65,7 +65,11 @@ def save(path, data):
 # ---------- 규칙 ----------
 def rules(data):
     r = data.get("rules", {})
-    return r.get("max_task_minutes", 30), r.get("status_values", DEFAULT_STATUSES)
+    statuses = list(r.get("status_values", DEFAULT_STATUSES))
+    for status in DEFAULT_STATUSES:
+        if status not in statuses:
+            statuses.append(status)
+    return r.get("max_task_minutes", 30), statuses
 
 
 def task_map(data):
@@ -313,7 +317,7 @@ def cmd_status(a, data):
     tm = task_map(data)
     for tid in ids:
         t = tm[tid]
-        if a.status in ("in_progress", "done"):
+        if a.status in ("in_progress", "review", "done"):
             pending = [d for d in t["depends_on"] if tm[d]["status"] != "done"]
             if pending and not a.force:
                 sys.exit(f"오류: {tid}의 의존 태스크가 아직 done이 아닙니다: {', '.join(pending)} (무시하려면 --force)")
@@ -442,6 +446,7 @@ def build_parser():
     s = sub.add_parser("status", help="상태 변경 (여러 개 가능)")
     s.add_argument("ids", nargs="+", help="태스크 ID들, 마지막 값이 상태")
     s.add_argument("--force", action="store_true", help="의존 미완료여도 변경")
+    s.add_argument("--repair", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(fn=cmd_status)
 
     s = sub.add_parser("rm", aliases=["delete"], help="태스크 삭제")
