@@ -9,12 +9,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app import __version__
+from app.api.jobs import router as jobs_router
 
 app = FastAPI(
     title="Reduce & Compare API",
     version=__version__,
     description="대규모 표 데이터를 축소하고 원본과의 유사도를 계산하는 로컬 API",
 )
+app.include_router(jobs_router)
 
 
 class Health(BaseModel):
