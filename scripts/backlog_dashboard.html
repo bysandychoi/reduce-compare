@@ -10,6 +10,20 @@
   h1 { font-size: 18px; margin: 0 0 4px; }
   .sub { color: #666; font-size: 13px; margin: 0 0 16px; }
   section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+  .main-layout { display: flex; gap: 0; align-items: flex-start; }
+  .main-col { flex: 1 1 auto; min-width: 0; margin-right: 14px; }
+  .side-col { flex: 0 0 520px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  .side-col section { font-size: 14px; }
+  .drag-handle { flex: 0 0 8px; align-self: stretch; cursor: col-resize; position: relative; margin-right: 6px; }
+  .drag-handle::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px;
+                         background: #d6dae0; border-radius: 2px; }
+  .drag-handle:hover::after, .drag-handle.dragging::after { background: #7c93c9; }
+  @media (max-width: 960px) {
+    .main-layout { flex-direction: column; }
+    .main-col { margin-right: 0; }
+    .side-col { position: static; flex-basis: auto; width: 100%; max-height: none; }
+    .drag-handle { display: none; }
+  }
   .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   button { cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; }
   button:hover { background: #eee; }
@@ -17,13 +31,13 @@
   input[type=file] { font-size: 12px; }
   .meta { font-size: 12px; color: #555; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; }
+  .chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; color: #33383d; font-weight: 600; }
   .chip b { margin-right: 4px; }
-  .chip.st-todo { border-color: #9aa; }
-  .chip.st-in_progress { background: #fff4d6; border-color: #e0b93d; }
-  .chip.st-done { background: #e2f5e6; border-color: #4caf50; }
-  .chip.st-blocked { background: #fde3e3; border-color: #e05353; }
-  .chip.st-unknown { background: #fde3e3; border-color: #e05353; font-weight: bold; }
+  .chip.st-todo { border-color: #9aa; color: #445; }
+  .chip.st-in_progress { background: #fff4d6; border-color: #e0b93d; color: #7a5b00; }
+  .chip.st-done { background: #e2f5e6; border-color: #4caf50; color: #1e6b2e; }
+  .chip.st-blocked { background: #fde3e3; border-color: #e05353; color: #a01d1d; }
+  .chip.st-unknown { background: #fde3e3; border-color: #e05353; color: #a01d1d; font-weight: bold; }
   .error-box { background: #fde3e3; border: 1px solid #e05353; border-radius: 6px; padding: 10px 12px; font-size: 13px; }
   .error-box h3 { margin: 0 0 6px; font-size: 13px; }
   .error-box ul { margin: 4px 0 0; padding-left: 18px; }
@@ -43,18 +57,38 @@
                 border-radius: 6px; padding: 8px; font-size: 12px; max-height: 320px; overflow: auto; }
   .doc-toggle { margin-top: 6px; }
   .muted { color: #888; }
+  .md-doc-wrap { margin-top: 6px; max-height: 420px; overflow: auto; border: 1px solid #e0e0e0;
+                 border-radius: 6px; padding: 10px 14px; background: #f9f9fa; }
+  .md-doc { font-size: 13px; line-height: 1.6; }
+  .md-doc h1, .md-doc h2, .md-doc h3, .md-doc h4, .md-doc h5, .md-doc h6 {
+    margin: 14px 0 6px; line-height: 1.35; }
+  .md-doc h1:first-child, .md-doc h2:first-child, .md-doc h3:first-child { margin-top: 0; }
+  .md-doc .md-h1 { font-size: 16px; border-bottom: 1px solid #e4e4e4; padding-bottom: 4px; }
+  .md-doc .md-h2 { font-size: 14.5px; }
+  .md-doc .md-h3, .md-doc .md-h4, .md-doc .md-h5, .md-doc .md-h6 { font-size: 13.5px; color: #444; }
+  .md-doc p { margin: 6px 0; word-break: break-word; }
+  .md-doc ul, .md-doc ol { margin: 4px 0 10px; padding-left: 20px; }
+  .md-doc li { margin: 2px 0; }
+  .md-doc hr { border: none; border-top: 1px solid #e0e0e0; margin: 12px 0; }
+  .md-doc code { background: #eef0f3; border-radius: 3px; padding: 1px 5px; font-size: 12px; }
+  .md-doc pre { background: #f0f1f3; border: 1px solid #e0e0e0; border-radius: 6px; padding: 8px 10px;
+                overflow: auto; margin: 8px 0; }
+  .md-doc pre code { background: none; padding: 0; }
   .log-entry { border: 1px solid #e4e4e4; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
   .log-entry .kv { margin: 0; }
   .log-entry .kv span.k { color: #666; margin-right: 6px; }
   .filters label { font-size: 13px; margin-right: 4px; }
   .filters { gap: 14px; }
   .ref-error { color: #b3261e; }
-  .status-pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; }
-  .status-pill.st-todo { border-color: #9aa; }
-  .status-pill.st-in_progress { background: #fff4d6; border-color: #e0b93d; }
-  .status-pill.st-done { background: #e2f5e6; border-color: #4caf50; }
-  .status-pill.st-blocked { background: #fde3e3; border-color: #e05353; }
-  .status-pill.st-unknown { background: #fde3e3; border-color: #e05353; font-weight: bold; }
+  .status-pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; border: 1px solid #ccc; background: #f0f1f3; color: #33383d; font-weight: 600; }
+  .status-pill.st-todo { border-color: #9aa; color: #445; }
+  .status-pill.st-in_progress { background: #fff4d6; border-color: #e0b93d; color: #7a5b00; }
+  .status-pill.st-done { background: #e2f5e6; border-color: #4caf50; color: #1e6b2e; }
+  .status-pill.st-blocked { background: #fde3e3; border-color: #e05353; color: #a01d1d; }
+  .status-pill.st-unknown { background: #fde3e3; border-color: #e05353; color: #a01d1d; font-weight: bold; }
+  .epic-group-row td { background: #eef0f4; font-weight: 700; font-size: 12px; color: #33383d; padding-top: 8px; padding-bottom: 8px; }
+  .gantt-group-row { background: #eef0f4; font-weight: 700; font-size: 12px; color: #33383d; padding: 5px 8px; margin: 6px 0 4px; border-radius: 4px; }
+  .gantt-group-row:first-child { margin-top: 0; }
   tr.task-row.row-done td:first-child { border-left: 4px solid #4caf50; }
   tr.task-row.row-in_progress td:first-child { border-left: 4px solid #e0b93d; }
   tr.task-row.row-blocked td:first-child { border-left: 4px solid #e05353; }
@@ -86,7 +120,21 @@
     tr.task-row.selected { background: #2b3a5c; }
     input[type=text], button { background: #26282b; color: #e7e7e7; border-color: #4a4b4e; }
     #detail pre, .log-entry { background: #1b1c1e; border-color: #3a3b3e; }
-    .chip, .status-pill { background: #2b2d30; border-color: #4a4b4e; }
+    .md-doc-wrap { background: #1b1c1e; border-color: #3a3b3e; }
+    .md-doc .md-h1 { border-bottom-color: #3a3b3e; }
+    .md-doc .md-h3, .md-doc .md-h4, .md-doc .md-h5, .md-doc .md-h6 { color: #aeb2b8; }
+    .md-doc hr { border-top-color: #3a3b3e; }
+    .md-doc code { background: #2b2d30; }
+    .md-doc pre { background: #17181a; border-color: #3a3b3e; }
+    .drag-handle::after { background: #3a3b3e; }
+    .drag-handle:hover::after, .drag-handle.dragging::after { background: #6f89c4; }
+    .chip, .status-pill { background: #2b2d30; border-color: #4a4b4e; color: #e7e7e7; }
+    .chip.st-todo, .status-pill.st-todo { color: #c3cad4; }
+    .chip.st-in_progress, .status-pill.st-in_progress { background: #4a3c0a; border-color: #e0b93d; color: #f5d879; }
+    .chip.st-done, .status-pill.st-done { background: #17331d; border-color: #4caf50; color: #8be09a; }
+    .chip.st-blocked, .status-pill.st-blocked, .chip.st-unknown, .status-pill.st-unknown { background: #3a1414; border-color: #e05353; color: #f28b8b; }
+    .epic-group-row td { background: #26282b; color: #d6d8db; }
+    .gantt-group-row { background: #26282b; color: #d6d8db; }
     .gantt-track { background: repeating-linear-gradient(90deg, #2b2d30, #2b2d30 1px, transparent 1px, transparent 60px); }
     .gantt-axis { color: #999; }
   }
@@ -123,36 +171,44 @@
   <div class="chips" id="statusChips"></div>
 </section>
 
-<section id="filterSection" style="display:none;">
-  <div class="row filters">
-    <input type="text" id="searchInput" placeholder="ID · 제목 · 설명 검색">
-    <span id="statusFilterBoxes"></span>
-    <button id="clearFilterBtn">필터 초기화</button>
-  </div>
-</section>
+<div class="main-layout">
+  <div class="main-col">
+    <section id="ganttSection" style="display:none;">
+      <div class="row" style="justify-content:space-between;">
+        <h2 style="margin:0; font-size:14px;">간트 차트 (예상 일정)</h2>
+        <button id="ganttToggleBtn">접기</button>
+      </div>
+      <p class="gantt-note" id="ganttNote"></p>
+      <div id="ganttWrap">
+        <div class="gantt-axis" id="ganttAxis"></div>
+        <div id="ganttRows"></div>
+      </div>
+    </section>
 
-<section id="tableSection" style="display:none;">
-  <table>
-    <thead>
-      <tr><th>ID</th><th>에픽</th><th>상태</th><th>제목</th><th>예상(분)</th><th>의존</th></tr>
-    </thead>
-    <tbody id="taskTbody"></tbody>
-  </table>
-</section>
+    <section id="filterSection" style="display:none;">
+      <div class="row filters">
+        <input type="text" id="searchInput" placeholder="ID · 제목 · 설명 검색">
+        <span id="statusFilterBoxes"></span>
+        <button id="clearFilterBtn">필터 초기화</button>
+      </div>
+    </section>
 
-<section id="ganttSection" style="display:none;">
-  <div class="row" style="justify-content:space-between;">
-    <h2 style="margin:0; font-size:14px;">간트 차트 (예상 일정)</h2>
-    <button id="ganttToggleBtn">접기</button>
+    <section id="tableSection" style="display:none;">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>에픽</th><th>상태</th><th>제목</th><th>예상(분)</th><th>의존</th></tr>
+        </thead>
+        <tbody id="taskTbody"></tbody>
+      </table>
+    </section>
   </div>
-  <p class="gantt-note" id="ganttNote"></p>
-  <div id="ganttWrap">
-    <div class="gantt-axis" id="ganttAxis"></div>
-    <div id="ganttRows"></div>
-  </div>
-</section>
 
-<section id="detail"></section>
+  <div class="drag-handle" id="dragHandle" style="display:none;" title="드래그해서 상세 패널 너비 조절"></div>
+
+  <div class="side-col">
+    <section id="detail"></section>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -301,7 +357,8 @@
     document.getElementById("filterSection").style.display = has ? "" : "none";
     document.getElementById("tableSection").style.display = has ? "" : "none";
     document.getElementById("ganttSection").style.display = has ? "" : "none";
-    document.getElementById("detail").style.display = "none";
+    document.querySelector(".side-col").style.display = has ? "" : "none";
+    document.getElementById("dragHandle").style.display = has ? "" : "none";
     state.selectedId = null;
     if (!has) return;
     renderSummary();
@@ -309,6 +366,7 @@
     renderTable();
     computeSchedule();
     renderGantt();
+    renderDetail(null);
   }
 
   // ---------- 간트(예상 일정) ----------
@@ -390,29 +448,33 @@
       axis.appendChild(tick);
     }
 
-    var rows = state.tasks.slice().sort(function (a, b) {
-      var sa = state.schedule[a.id] ? state.schedule[a.id].start : 0;
-      var sb = state.schedule[b.id] ? state.schedule[b.id].start : 0;
-      return sa - sb || String(a.epic).localeCompare(String(b.epic)) || a.id.localeCompare(b.id);
-    });
+    groupByEpic(state.tasks).forEach(function (group) {
+      rowsBox.appendChild(el("div", "gantt-group-row", group.label + " (" + group.rows.length + ")"));
 
-    rows.forEach(function (t) {
-      var sch = state.schedule[t.id] || { start: 0, end: 0, cyclic: false };
-      var row = el("div", "gantt-row");
-      var label = el("div", "gantt-label", t.id + " · " + fallback(t.title, "(제목 없음)"));
-      label.title = t.id + " " + fallback(t.title, "") + " — " + fmtMinutes(sch.start) + " ~ " + fmtMinutes(sch.end)
-        + (sch.cyclic ? " (순환 의존으로 제외됨)" : "");
-      label.addEventListener("click", function () { selectTask(t.id); });
-      row.appendChild(label);
-      var track = el("div", "gantt-track");
-      var bar = el("div", "gantt-bar " + statusClass(t) + (sch.cyclic ? " cyclic" : ""));
-      var leftPct = (sch.start / totalSpan) * 100;
-      var widthPct = Math.max(((sch.end - sch.start) / totalSpan) * 100, 0.4);
-      bar.style.left = leftPct + "%";
-      bar.style.width = widthPct + "%";
-      track.appendChild(bar);
-      row.appendChild(track);
-      rowsBox.appendChild(row);
+      var rows = group.rows.slice().sort(function (a, b) {
+        var sa = state.schedule[a.id] ? state.schedule[a.id].start : 0;
+        var sb = state.schedule[b.id] ? state.schedule[b.id].start : 0;
+        return sa - sb || a.id.localeCompare(b.id);
+      });
+
+      rows.forEach(function (t) {
+        var sch = state.schedule[t.id] || { start: 0, end: 0, cyclic: false };
+        var row = el("div", "gantt-row");
+        var label = el("div", "gantt-label", t.id + " · " + fallback(t.title, "(제목 없음)"));
+        label.title = t.id + " " + fallback(t.title, "") + " — " + fmtMinutes(sch.start) + " ~ " + fmtMinutes(sch.end)
+          + (sch.cyclic ? " (순환 의존으로 제외됨)" : "");
+        label.addEventListener("click", function () { selectTask(t.id); });
+        row.appendChild(label);
+        var track = el("div", "gantt-track");
+        var bar = el("div", "gantt-bar " + statusClass(t) + (sch.cyclic ? " cyclic" : ""));
+        var leftPct = (sch.start / totalSpan) * 100;
+        var widthPct = Math.max(((sch.end - sch.start) / totalSpan) * 100, 0.4);
+        bar.style.left = leftPct + "%";
+        bar.style.width = widthPct + "%";
+        track.appendChild(bar);
+        row.appendChild(track);
+        rowsBox.appendChild(row);
+      });
     });
   }
 
@@ -532,6 +594,33 @@
     return true;
   }
 
+  function epicGroupLabel(key) {
+    if (key === "__unassigned__") return "미지정";
+    return state.epicTitle[key] ? (key + " " + state.epicTitle[key]) : key;
+  }
+
+  function groupByEpic(rows) {
+    var groups = {}, order = [];
+    state.epics.forEach(function (e) {
+      if (e && e.id !== undefined) order.push(String(e.id));
+    });
+    rows.forEach(function (t) {
+      var key = (t.epic !== undefined && t.epic !== null && t.epic !== "") ? String(t.epic) : "__unassigned__";
+      if (!groups[key]) {
+        groups[key] = [];
+        if (order.indexOf(key) === -1) order.push(key);
+      }
+      groups[key].push(t);
+    });
+    if (groups["__unassigned__"]) {
+      order = order.filter(function (k) { return k !== "__unassigned__"; });
+      order.push("__unassigned__");
+    }
+    return order.filter(function (k) { return groups[k] && groups[k].length; }).map(function (k) {
+      return { key: k, label: epicGroupLabel(k), rows: groups[k] };
+    });
+  }
+
   function renderTable() {
     var tbody = document.getElementById("taskTbody");
     tbody.innerHTML = "";
@@ -543,28 +632,37 @@
       tr.appendChild(td); tbody.appendChild(tr);
       return;
     }
-    rows.forEach(function (t) {
-      var sCls = statusClass(t).replace("st-", "");
-      var tr = document.createElement("tr");
-      tr.className = "task-row row-" + sCls + (t.id === state.selectedId ? " selected" : "");
-      tr.addEventListener("click", function () { selectTask(t.id); });
-      tr.appendChild(el("td", null, t.id));
-      tr.appendChild(el("td", null, t.epic !== undefined ? state.epicTitle[String(t.epic)] ? (t.epic + " " + state.epicTitle[String(t.epic)]) : String(t.epic) : "미지정"));
-      var stTd = document.createElement("td");
-      stTd.appendChild(el("span", "status-pill " + statusClass(t), fallback(t.status, "정보 없음")));
-      tr.appendChild(stTd);
-      tr.appendChild(el("td", null, fallback(t.title, "(제목 없음)")));
-      tr.appendChild(el("td", null, fallback(t.estMin, "미지정")));
-      var depTd = document.createElement("td");
-      var badDeps = state.refErrors.filter(function (r) { return r.taskId === t.id && r.field === "deps"; }).map(function (r) { return r.value; });
-      if (t.deps.length === 0) {
-        depTd.textContent = "없음";
-      } else {
-        depTd.textContent = t.deps.map(function (d) { return badDeps.includes(String(d)) ? (d + "⚠") : d; }).join(", ");
-        if (badDeps.length) depTd.classList.add("ref-error");
-      }
-      tr.appendChild(depTd);
-      tbody.appendChild(tr);
+    groupByEpic(rows).forEach(function (group) {
+      var headTr = el("tr", "epic-group-row");
+      var headTd = document.createElement("td");
+      headTd.colSpan = 6;
+      headTd.textContent = group.label + " (" + group.rows.length + ")";
+      headTr.appendChild(headTd);
+      tbody.appendChild(headTr);
+
+      group.rows.forEach(function (t) {
+        var sCls = statusClass(t).replace("st-", "");
+        var tr = document.createElement("tr");
+        tr.className = "task-row row-" + sCls + (t.id === state.selectedId ? " selected" : "");
+        tr.addEventListener("click", function () { selectTask(t.id); });
+        tr.appendChild(el("td", null, t.id));
+        tr.appendChild(el("td", null, t.epic !== undefined ? state.epicTitle[String(t.epic)] ? (t.epic + " " + state.epicTitle[String(t.epic)]) : String(t.epic) : "미지정"));
+        var stTd = document.createElement("td");
+        stTd.appendChild(el("span", "status-pill " + statusClass(t), fallback(t.status, "정보 없음")));
+        tr.appendChild(stTd);
+        tr.appendChild(el("td", null, fallback(t.title, "(제목 없음)")));
+        tr.appendChild(el("td", null, fallback(t.estMin, "미지정")));
+        var depTd = document.createElement("td");
+        var badDeps = state.refErrors.filter(function (r) { return r.taskId === t.id && r.field === "deps"; }).map(function (r) { return r.value; });
+        if (t.deps.length === 0) {
+          depTd.textContent = "없음";
+        } else {
+          depTd.textContent = t.deps.map(function (d) { return badDeps.includes(String(d)) ? (d + "⚠") : d; }).join(", ");
+          if (badDeps.length) depTd.classList.add("ref-error");
+        }
+        tr.appendChild(depTd);
+        tbody.appendChild(tr);
+      });
     });
   }
 
@@ -573,6 +671,9 @@
     state.selectedId = id;
     renderTable();
     renderDetail(state.byId[id]);
+    if (window.matchMedia("(max-width: 960px)").matches) {
+      document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   function ddRow(dl, label, valueNode) {
@@ -647,6 +748,92 @@
     return wrap;
   }
 
+  // ---------- 마크다운 렌더링(외부 라이브러리 없이 최소 지원) ----------
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function inlineMd(s) {
+    s = escapeHtml(s);
+    s = s.replace(/`([^`]+)`/g, function (m, c) { return "<code>" + c + "</code>"; });
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+    return s;
+  }
+
+  function renderMarkdown(text) {
+    var container = el("div", "md-doc");
+    var lines = String(text).replace(/\r\n/g, "\n").split("\n");
+    var i = 0, listEl = null, listType = null;
+    function closeList() { listEl = null; listType = null; }
+
+    while (i < lines.length) {
+      var line = lines[i];
+
+      if (/^```/.test(line)) {
+        closeList();
+        var codeLines = [];
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) { codeLines.push(lines[i]); i++; }
+        i++;
+        var pre = document.createElement("pre");
+        pre.appendChild(el("code", null, codeLines.join("\n")));
+        container.appendChild(pre);
+        continue;
+      }
+
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        closeList();
+        var level = h[1].length;
+        var hEl = document.createElement("h" + Math.min(level + 1, 6));
+        hEl.className = "md-h" + level;
+        hEl.innerHTML = inlineMd(h[2]);
+        container.appendChild(hEl);
+        i++;
+        continue;
+      }
+
+      if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+        closeList();
+        container.appendChild(document.createElement("hr"));
+        i++;
+        continue;
+      }
+
+      var ul = line.match(/^\s*[-*]\s+(.*)$/);
+      var ol = line.match(/^\s*\d+\.\s+(.*)$/);
+      if (ul || ol) {
+        var type = ul ? "ul" : "ol";
+        if (!listEl || listType !== type) {
+          listEl = document.createElement(type);
+          container.appendChild(listEl);
+          listType = type;
+        }
+        var li = document.createElement("li");
+        li.innerHTML = inlineMd((ul || ol)[1]);
+        listEl.appendChild(li);
+        i++;
+        continue;
+      }
+
+      if (/^\s*$/.test(line)) { closeList(); i++; continue; }
+
+      closeList();
+      var paraLines = [line];
+      i++;
+      while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^```/.test(lines[i])
+             && !/^#{1,6}\s+/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i])) {
+        paraLines.push(lines[i]);
+        i++;
+      }
+      var p = document.createElement("p");
+      p.innerHTML = inlineMd(paraLines.join(" "));
+      container.appendChild(p);
+    }
+    return container;
+  }
+
   function docLinkNode(t) {
     var wrap = document.createElement("div");
     var docFile = state.docFiles[t.id];
@@ -661,23 +848,23 @@
       var label = pair[0], file = pair[1];
       if (!file) return;
       var btn = el("button", "doc-toggle", label + " 보기");
-      var pre = document.createElement("pre");
-      pre.style.display = "none";
+      var box = el("div", "md-doc-wrap");
+      box.style.display = "none";
       btn.addEventListener("click", function () {
-        if (pre.style.display === "none") {
-          if (!pre.dataset.loaded) {
+        if (box.style.display === "none") {
+          if (!box.dataset.loaded) {
             var reader = new FileReader();
-            reader.onload = function () { pre.textContent = reader.result; pre.dataset.loaded = "1"; };
-            reader.onerror = function () { pre.textContent = "(파일을 읽을 수 없습니다)"; };
+            reader.onload = function () { box.appendChild(renderMarkdown(reader.result)); box.dataset.loaded = "1"; };
+            reader.onerror = function () { box.appendChild(el("div", "muted", "(파일을 읽을 수 없습니다)")); box.dataset.loaded = "1"; };
             reader.readAsText(file);
           }
-          pre.style.display = "";
+          box.style.display = "";
         } else {
-          pre.style.display = "none";
+          box.style.display = "none";
         }
       });
       wrap.appendChild(btn);
-      wrap.appendChild(pre);
+      wrap.appendChild(box);
     });
     return wrap;
   }
@@ -685,8 +872,11 @@
   function renderDetail(t) {
     var box = document.getElementById("detail");
     box.innerHTML = "";
-    box.style.display = "";
-    if (!t) return;
+    box.style.display = "block";
+    if (!t) {
+      box.appendChild(el("div", "muted", "목록 또는 간트 차트에서 태스크를 클릭하면 여기에 상세 정보가 표시됩니다."));
+      return;
+    }
     box.appendChild(el("h2", null, t.id + " — " + fallback(t.title, "(제목 없음)")));
     var dl = document.createElement("dl");
     ddRow(dl, "summary", fallback(t.summary, "설명 없음"));
@@ -820,6 +1010,38 @@
     state.ganttExpanded = !state.ganttExpanded;
     renderGantt();
   });
+
+  // ---------- 상세 패널 너비 드래그 조절 ----------
+  (function initSideResize() {
+    var handle = document.getElementById("dragHandle");
+    var side = document.querySelector(".side-col");
+    var MIN_W = 320, MAX_W = 900, STORE_KEY = "backlogDashboardSideWidth";
+    var saved = 0;
+    try { saved = parseInt(localStorage.getItem(STORE_KEY) || "", 10); } catch (e) { /* 저장 불가 환경은 무시 */ }
+    if (saved && saved >= MIN_W && saved <= MAX_W) side.style.flexBasis = saved + "px";
+
+    var dragging = false, startX = 0, startW = 0;
+    handle.addEventListener("mousedown", function (e) {
+      dragging = true;
+      startX = e.clientX;
+      startW = side.getBoundingClientRect().width;
+      handle.classList.add("dragging");
+      document.body.style.userSelect = "none";
+      e.preventDefault();
+    });
+    window.addEventListener("mousemove", function (e) {
+      if (!dragging) return;
+      var w = Math.min(MAX_W, Math.max(MIN_W, startW + (startX - e.clientX)));
+      side.style.flexBasis = w + "px";
+    });
+    window.addEventListener("mouseup", function () {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove("dragging");
+      document.body.style.userSelect = "";
+      try { localStorage.setItem(STORE_KEY, String(Math.round(side.getBoundingClientRect().width))); } catch (e) { /* 저장 불가 환경은 무시 */ }
+    });
+  })();
 })();
 </script>
 </body>
