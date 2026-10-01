@@ -7,9 +7,12 @@ import numpy as np
 import pandas as pd
 
 from app.core.clustering import cluster_reduce, virtual_rows
+from app.core.ingest import collect_csv_files
 from app.core.metrics import correlation_metrics, distribution_metrics
+from app.core.prepare import PrepareResult, merge_group, prepare_group
+from app.core.projection import ProjectionResult, project_comparison
 from app.core.sampling import Reduction, choose_stratify_column, random_sample, stratified_sample
-from app.core.schema import ColumnInfo
+from app.core.schema import ColumnInfo, SchemaGroup, extract_schema, group_by_schema
 from app.core.structure import overall_score, structure_metrics
 
 DEFAULT_TARGET = 85.0       # 유사도 기준치 기본값 (T003 결정)
@@ -29,6 +32,29 @@ class Attempt:
     reduction: Reduction
     frame: pd.DataFrame
     detail: dict = field(default_factory=dict)
+
+
+@dataclass
+class GroupPipelineResult:
+    """한 스키마 그룹의 준비·축소·평가·투영 결과."""
+
+    name: str
+    files: list[str]
+    original_rows: int
+    prepared: PrepareResult
+    chosen: Attempt
+    size_curve: list[dict]
+    method_scores: list[dict]
+    projection: ProjectionResult
+
+
+@dataclass
+class PipelineResult:
+    """폴더 전체 실행 결과와 건너뛴 그룹 사유."""
+
+    folder: str
+    groups: list[GroupPipelineResult] = field(default_factory=list)
+    skipped: list[dict] = field(default_factory=list)
 
 
 def size_candidates(total: int, steps: int = 7) -> list[int]:
@@ -106,3 +132,55 @@ def choose_method(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo], se
               "distribution": a.distribution, "correlation": a.correlation,
               "structure": a.structure} for a in results]
     return best, table
+
+
+def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TARGET,
+                       seed: int = 0, projection_method: str = "pca",
+                       projection_dimensions: int = 2) -> GroupPipelineResult:
+    """한 스키마 그룹을 병합부터 투영까지 실행한다."""
+    frame = merge_group(group.files)
+    prepared = prepare_group(frame, group.columns)
+    sized, curve = search_size(
+        prepared.frame, prepared.features, group.columns, prepared.used_columns,
+        target=target, seed=seed,
+    )
+    chosen, methods = choose_method(
+        prepared.frame, prepared.features, group.columns, prepared.used_columns,
+        sized.size, seed=seed,
+    )
+    reduced_features = (
+        prepared.features[chosen.reduction.indices]
+        if len(chosen.reduction.indices)
+        else _virtual_features(prepared.features, chosen.reduction)
+    )
+    projection = project_comparison(
+        prepared.features, reduced_features, method=projection_method,
+        dimensions=projection_dimensions, seed=seed,
+    )
+    return GroupPipelineResult(
+        name=name, files=[item.name for item in group.files], original_rows=len(frame),
+        prepared=prepared, chosen=chosen, size_curve=curve, method_scores=methods,
+        projection=projection,
+    )
+
+
+def run_folder_pipeline(folder: str, target: float = DEFAULT_TARGET, seed: int = 0,
+                        projection_method: str = "pca",
+                        projection_dimensions: int = 2) -> PipelineResult:
+    """폴더의 표 파일을 스키마별로 묶어 전체 축소 파이프라인을 실행한다."""
+    files = collect_csv_files(folder)
+    if not files:
+        raise ValueError(f"읽을 수 있는 표 파일을 찾지 못했습니다: {folder}")
+    groups = group_by_schema([extract_schema(item) for item in files])
+    result = PipelineResult(folder=folder)
+    for index, group in enumerate(groups):
+        name = chr(ord("A") + index) if index < 26 else f"G{index + 1}"
+        try:
+            completed = run_group_pipeline(
+                group, name, target, seed, projection_method, projection_dimensions,
+            )
+            result.groups.append(completed)
+        except ValueError as exc:
+            result.skipped.append({"name": name, "files": [f.name for f in group.files],
+                                   "reason": str(exc)})
+    return result
