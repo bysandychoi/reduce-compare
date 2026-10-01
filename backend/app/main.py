@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app import __version__
+from app.api.columns import router as columns_router
 from app.api.groups import router as groups_router
 from app.api.jobs import router as jobs_router
 
@@ -19,6 +20,7 @@ app = FastAPI(
 )
 app.include_router(jobs_router)
 app.include_router(groups_router)
+app.include_router(columns_router)
 
 
 class Health(BaseModel):
