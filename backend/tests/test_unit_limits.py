@@ -1,5 +1,6 @@
 """--limit 적용 순서와 단위 컬럼 개수 보장 테스트 (T069)."""
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -61,18 +62,34 @@ def test_units_by_values_errors():
         units_by_values(df, UNIT, STRATA, {"lot_id": ["없는 lot"]})
 
 
-def _run(tmp_path, *extra):
+def _run_process(tmp_path, *extra):
     data = tmp_path / "data"
     data.mkdir(exist_ok=True)
     _lots().to_csv(data / "lots.csv", index=False)
     out = tmp_path / "out"
     cmd = [sys.executable, str(SCRIPT), str(data), "--unit", ",".join(UNIT),
            "--strata", ",".join(STRATA), "--no-plot", "--out", str(out), *extra]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "cp949"
+    proc = subprocess.run(
+        cmd, capture_output=True, text=True, encoding="cp949", env=env, timeout=300,
+    )
     assert proc.returncode == 0, proc.stderr
+    return proc, out
+
+
+def _run(tmp_path, *extra):
+    proc, out = _run_process(tmp_path, *extra)
     produced = sorted(out.glob("reduced_*.csv"))   # 건너뛴 그룹은 파일이 없다
     assert len(produced) == 1, proc.stdout
     return proc.stdout, pd.read_csv(produced[0])
+
+
+def test_cli_inspect_prints_under_cp949(tmp_path):
+    proc, out = _run_process(tmp_path, "--inspect")
+    assert "표 파일 1개" in proc.stdout
+    assert "단위" in proc.stdout and "층 조합" in proc.stdout
+    assert not out.exists()
 
 
 def test_cli_unit_limit_is_final_count_after_row_filters(tmp_path):
@@ -107,5 +124,5 @@ def test_cli_group_without_limit_column_is_skipped(tmp_path):
     data.mkdir()
     (data / "other.csv").write_text("a,b\n1,2\n3,4\n", encoding="utf-8")
     stdout, reduced = _run(tmp_path, "--limit", "lot_id=50", "--ratio", "0.2")
-    assert "건너뜀 — 데이터에 없는 컬럼입니다: lot_id" in stdout
+    assert "건너뜀 - 데이터에 없는 컬럼입니다: lot_id" in stdout
     assert reduced["lot_id"].nunique() == 50

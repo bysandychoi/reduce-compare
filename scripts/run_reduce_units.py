@@ -24,15 +24,20 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 
 from app.core.catmetrics import distribution_table, grouped_similarity  # noqa: E402
-from app.core.grouped import stratified_units, stratum_report, unit_table, units_by_values  # noqa: E402
+from app.core.grouped import (  # noqa: E402
+    stratified_units,
+    stratum_report,
+    unit_table,
+    units_by_values,
+)
 from app.core.ingest import collect_csv_files  # noqa: E402
 from app.core.prepare import merge_group  # noqa: E402
 from app.core.schema import extract_schema, group_by_schema  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from units_limits import apply_limits  # noqa: E402
-from units_sets import make_sets  # noqa: E402
 from units_report import describe, print_distribution, print_result  # noqa: E402
+from units_sets import make_sets  # noqa: E402
 
 RATIOS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5)
 
@@ -118,13 +123,15 @@ def parse_args():
     ap.add_argument("--dist-top", type=int, default=10, help="컬럼마다 보여줄 값 개수 (기본 10)")
     ap.add_argument("--no-plot", action="store_true", help="분포 그림을 만들지 않음")
     ap.add_argument("--limit", default=None,
-                    help="컬럼의 값 종류를 줄인다 (예: eqp_id=6,mask_id=50). 다른 컬럼을 먼저 거르고, "
+                    help="컬럼 값 종류를 줄인다 (예: eqp_id=6,mask_id=50). "
+                         "다른 컬럼을 먼저 거르고, "
                          "--unit 컬럼(예: lot_id=100)은 마지막에 고른다. 단위 컬럼을 여러 개 주면 "
                          "개수가 정확히 맞는 것은 마지막에 적은 컬럼이다")
     ap.add_argument("--limit-mode", default="top", choices=["top", "sample"],
                     help="top=많이 쓰인 순서, sample=원본 비율을 확률로 무작위 (기본 top)")
     ap.add_argument("--sets", type=int, default=0,
-                    help="기준 점수(--target)를 넘는 서로 다른 무작위 축소 세트를 이 개수만큼 만든다")
+                    help="기준 점수(--target)를 넘는 서로 다른 무작위 축소 세트를 "
+                         "이 개수만큼 만든다")
     ap.add_argument("--max-tries", type=int, default=None,
                     help="--sets 시도 횟수 상한 (기본: 세트 수 × 20)")
     args = ap.parse_args()
@@ -146,7 +153,7 @@ def run_group(df, name, args):
         else:
             describe(df, args.unit_cols, args.strata_cols)
     except ValueError as e:
-        print(f"  건너뜀 — {e}")
+        print(f"  건너뜀 - {e}")
         return
     if args.inspect:
         return
