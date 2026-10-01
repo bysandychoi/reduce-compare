@@ -74,6 +74,9 @@
   .md-doc pre { background: #f0f1f3; border: 1px solid #e0e0e0; border-radius: 6px; padding: 8px 10px;
                 overflow: auto; margin: 8px 0; }
   .md-doc pre code { background: none; padding: 0; }
+  .md-doc img { display: block; max-width: 100%; height: auto; margin: 8px 0; border-radius: 4px; }
+  .md-doc .md-img-missing { display: inline-block; padding: 2px 6px; border: 1px dashed #c4c7cc;
+                            border-radius: 4px; color: #777; font-size: 12px; }
   .log-entry { border: 1px solid #e4e4e4; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
   .log-entry .kv { margin: 0; }
   .log-entry .kv span.k { color: #666; margin-right: 6px; }
@@ -231,6 +234,9 @@
     loadedAt: null,
     docFiles: {},        // id -> File (<id>.md)
     reviewFiles: {},      // id -> File (<id>.review.md)
+    docPaths: new Map(),  // File -> 연결 폴더 기준 경로 (예: "T139.md")
+    assetFiles: {},       // 연결 폴더 기준 경로 -> File (그림 등)
+    assetUrls: {},        // 연결 폴더 기준 경로 -> blob: URL (폴더를 다시 연결하면 해제)
     docsSourceLabel: null,
     filters: { search: "", statuses: null }, // statuses: null = all
     selectedId: null,
@@ -753,12 +759,70 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/"/g, "&quot;");
+  }
+
+  // 그림은 자리표시 span으로만 남기고, 실제 <img>는 hydrateImages가 DOM으로 만든다.
+  function imageToken(alt, src) {
+    return '<span class="md-img" data-alt="' + escapeAttr(alt) + '" data-src="' + escapeAttr(src) + '"></span>';
+  }
+
   function inlineMd(s) {
-    s = escapeHtml(s);
-    s = s.replace(/`([^`]+)`/g, function (m, c) { return "<code>" + c + "</code>"; });
-    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    s = s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
-    return s;
+    // 코드 구간(`...`) 안의 ![..](..)는 그림으로 바꾸지 않는다.
+    return String(s).split(/(`[^`]+`)/).map(function (part, idx) {
+      if (idx % 2 === 1) return "<code>" + escapeHtml(part.slice(1, -1)) + "</code>";
+      var images = [];
+      part = part.replace(/!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g, function (m, alt, src) {
+        images.push(imageToken(alt, src));
+        return "\u0000" + (images.length - 1) + "\u0000";
+      });
+      part = escapeHtml(part);
+      part = part.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      part = part.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+      return part.replace(/\u0000(\d+)\u0000/g, function (m, n) { return images[Number(n)]; });
+    }).join("");
+  }
+
+  // 연결한 폴더 안의 상대 경로만 허용한다. 외부 URL·절대 경로·상위 경로(..)는 null.
+  function resolveAssetPath(baseDir, src) {
+    var raw = String(src);
+    try { raw = decodeURI(raw); } catch (e) { return null; }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || /^[\/\\]/.test(raw) || raw.indexOf("\\") !== -1) return null;
+    var parts = (baseDir ? baseDir.split("/") : []).concat(raw.split("/"));
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p === "" || p === ".") continue;
+      if (p === "..") return null;
+      out.push(p);
+    }
+    return out.length ? out.join("/") : null;
+  }
+
+  function assetUrl(path) {
+    if (!state.assetFiles[path]) return null;
+    if (!state.assetUrls[path]) state.assetUrls[path] = URL.createObjectURL(state.assetFiles[path]);
+    return state.assetUrls[path];
+  }
+
+  function hydrateImages(container, baseDir) {
+    container.querySelectorAll("span.md-img").forEach(function (span) {
+      var alt = span.dataset.alt || "", src = span.dataset.src || "";
+      var path = resolveAssetPath(baseDir, src);
+      var url = path && /\.(png|jpe?g|gif|webp|svg)$/i.test(path) ? assetUrl(path) : null;
+      var node;
+      if (url) {
+        node = document.createElement("img");
+        node.src = url;
+        node.alt = alt;
+        node.title = alt;
+      } else {
+        node = el("span", "md-img-missing", "[그림 표시 불가: " + (alt || "그림") + " (" + src + ")]");
+      }
+      span.replaceWith(node);
+    });
+    return container;
   }
 
   function renderMarkdown(text) {
@@ -854,7 +918,12 @@
         if (box.style.display === "none") {
           if (!box.dataset.loaded) {
             var reader = new FileReader();
-            reader.onload = function () { box.appendChild(renderMarkdown(reader.result)); box.dataset.loaded = "1"; };
+            reader.onload = function () {
+              var docPath = state.docPaths.get(file) || file.name;
+              var baseDir = docPath.indexOf("/") === -1 ? "" : docPath.slice(0, docPath.lastIndexOf("/"));
+              box.appendChild(hydrateImages(renderMarkdown(reader.result), baseDir));
+              box.dataset.loaded = "1";
+            };
             reader.onerror = function () { box.appendChild(el("div", "muted", "(파일을 읽을 수 없습니다)")); box.dataset.loaded = "1"; };
             reader.readAsText(file);
           }
@@ -963,9 +1032,15 @@
 
   function loadDocsFileList(fileList) {
     state.docFiles = {}; state.reviewFiles = {};
+    Object.keys(state.assetUrls).forEach(function (p) { URL.revokeObjectURL(state.assetUrls[p]); });
+    state.docPaths = new Map(); state.assetFiles = {}; state.assetUrls = {};
     var files = Array.prototype.slice.call(fileList);
     files.forEach(function (f) {
       var name = f.name;
+      // webkitRelativePath = "<선택한 폴더>/T139/concept.png" → 폴더 기준 경로 "T139/concept.png"
+      var rel = f.webkitRelativePath ? f.webkitRelativePath.split("/").slice(1).join("/") : name;
+      state.assetFiles[rel || name] = f;
+      state.docPaths.set(f, rel || name);
       var mReview = name.match(/^(.+)\.review\.md$/);
       var mDoc = !mReview && name.match(/^(.+)\.md$/);
       if (mReview) state.reviewFiles[mReview[1]] = f;
