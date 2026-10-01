@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import Literal
@@ -47,8 +48,15 @@ class RunStatus(BaseModel):
 
 def _write_json(path: Path, payload: dict) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(path)
+    for attempt in range(5):
+        try:
+            temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            temporary.replace(path)
+            return
+        except PermissionError:
+            if attempt == 4:
+                raise
+            time.sleep(0.01)
 
 
 def _failure_message(stage: str, error: Exception) -> str:
@@ -67,13 +75,22 @@ def _failure_message(stage: str, error: Exception) -> str:
 
 def read_run_status(directory: Path, job_id: str) -> RunStatus:
     path = directory / "run.json"
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        return RunStatus(job_id=job_id, **payload)
-    except (OSError, json.JSONDecodeError, TypeError, ValidationError) as error:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, "작업 상태를 읽을 수 없습니다"
-        ) from error
+    transient_error = None
+    for attempt in range(5):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            return RunStatus(job_id=job_id, **payload)
+        except (OSError, json.JSONDecodeError) as error:
+            transient_error = error
+            if attempt < 4:
+                time.sleep(0.01)
+        except (TypeError, ValidationError) as error:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, "작업 상태를 읽을 수 없습니다"
+            ) from error
+    raise HTTPException(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, "작업 상태를 읽을 수 없습니다"
+    ) from transient_error
 
 
 def _configuration(job_id: str) -> tuple[Path, dict[str, list[str]], dict[str, bool]]:
