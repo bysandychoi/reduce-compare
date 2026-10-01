@@ -67,6 +67,7 @@ def test_plots_and_weighted_original_comparison(tmp_path):
     table = pd.read_csv(tmp_path / 'distributions' / 'set_001.csv')
     assert table.loc[table.value == 'x', 'reduced_ratio'].iloc[0] == .75
     assert (tmp_path / 'distributions' / 'distribution_set_001.png').stat().st_size > 100
+    assert (tmp_path / 'distribution_overview.png').stat().st_size > 100
     assert (tmp_path / 'comparison.png').stat().st_size > 100
 
 
@@ -89,6 +90,28 @@ def test_span_widens_when_every_pair_is_identical():
     assert _span(np.array([[np.nan]])) == (0.0, 1.0)
 
 
+def test_overview_values_cover_all_sets_and_missing_categories():
+    from units_set_reports import _overview_values
+    original = {'category': pd.Series({'x': .7, 'y': .3})}
+    entries = [({'category': pd.Series({'x': .6, 'y': .4})}, set()),
+               ({'category': pd.Series({'x': .8, 'z': .2})}, set())]
+    values, orig, center, low, high = _overview_values(original, entries, 'category')
+    got = {value: tuple(series[i] for series in (orig, center, low, high))
+           for i, value in enumerate(values)}
+    assert got['x'] == pytest.approx((.7, .7, .6, .8))
+    assert got['y'] == pytest.approx((.3, .2, 0, .4))
+    assert got['z'] == pytest.approx((0, .1, 0, .2))
+
+
+def test_one_set_writes_overview_but_not_pair_chart(tmp_path):
+    a = pd.DataFrame({'lot': ['a', 'b'], 'step': [1, 1], 'category': ['x', 'y']})
+    reports = SetReports(a, args(False), str(tmp_path), ['category'])
+    add(reports, 1, a)
+    reports.finish()
+    assert (tmp_path / 'distribution_overview.png').stat().st_size > 100
+    assert not (tmp_path / 'comparison.png').exists()
+
+
 def test_cleanup_removes_report_artifacts_but_preserves_unrelated_files(tmp_path):
     from units_sets import _prepare_folder
     reports = tmp_path / 'distributions'
@@ -97,10 +120,12 @@ def test_cleanup_removes_report_artifacts_but_preserves_unrelated_files(tmp_path
         (reports / name).write_text('old')
     (reports / 'notes.txt').write_text('keep')
     (tmp_path / 'comparison.png').write_text('old')
+    (tmp_path / 'distribution_overview.png').write_text('old')
     _prepare_folder(str(tmp_path))
     assert not (reports / 'set_004.csv').exists()
     assert not (reports / 'distribution_set_004.png').exists()
     assert not (tmp_path / 'comparison.png').exists()
+    assert not (tmp_path / 'distribution_overview.png').exists()
     assert (reports / 'notes.txt').read_text() == 'keep'
 
 

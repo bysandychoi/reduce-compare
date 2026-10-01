@@ -30,6 +30,9 @@ class SetReports:
     def __init__(self, original, args, folder, columns):
         self.original, self.args, self.folder = original, args, folder
         self.columns = columns
+        self.shown = ([c.strip() for c in args.show_dist.split(',') if c.strip() in columns]
+                      if args.show_dist else [c for c in columns if original[c].nunique() <= 20])
+        self.original_ratios = _ratios(original, np.ones(len(original)), columns)
         self.entries = []
         self.distributions = os.path.join(folder, "distributions")
         os.makedirs(self.distributions, exist_ok=True)
@@ -43,12 +46,10 @@ class SetReports:
             from plot_distribution import save_distribution_chart
 
             from app.core.grouped import unit_table
-            shown = ([c.strip() for c in self.args.show_dist.split(',')]
-                     if self.args.show_dist else [c for c in self.columns
-                                                 if self.original[c].nunique() <= 20])
             sizes = (unit_table(self.original, red.unit_cols, red.strata_cols)['rows'].to_numpy(),
                      unit_table(rows, red.unit_cols, red.strata_cols)['rows'].to_numpy())
-            save_distribution_chart(self.distributions, f'set_{index:03d}', table, shown, sizes)
+            save_distribution_chart(self.distributions, f'set_{index:03d}', table,
+                                    self.shown, sizes)
         self.entries.append((_ratios(rows, red.weights, self.columns),
                              _units(rows, red.unit_cols)))
 
@@ -74,8 +75,10 @@ class SetReports:
         pd.DataFrame(details, columns=DETAIL_COLUMNS).to_csv(
             os.path.join(self.folder, 'distribution_differences.csv'),
             index=False, encoding='utf-8-sig')
-        if not self.args.no_plot and len(self.entries) > 1:
-            _comparison_chart(self.folder, table, min(40, len(self.entries)))
+        if not self.args.no_plot and self.entries:
+            _overview_chart(self.folder, self.original_ratios, self.entries, self.shown)
+            if len(self.entries) > 1:
+                _comparison_chart(self.folder, table, min(40, len(self.entries)))
         print(f"  세트별 분포와 세트 쌍 비교: {self.folder}")
         return table
 
@@ -92,9 +95,9 @@ def _matrix(table, key, count):
 
 def _span(values):
     """비대각 값의 실제 범위. 0~1 고정이면 비슷한 세트가 모두 같은 색으로 보인다."""
-    low, high = float(np.nanmin(values)), float(np.nanmax(values))
-    if not np.isfinite(low):
+    if not np.isfinite(values).any():
         return 0.0, 1.0
+    low, high = float(np.nanmin(values)), float(np.nanmax(values))
     return (low - 0.005, high + 0.005) if high - low < 1e-12 else (low, high)
 
 
@@ -120,8 +123,7 @@ def _comparison_chart(folder, table, count):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    cmap = matplotlib.colormaps['viridis'].copy()
-    cmap.set_bad('#E5E5E5')          # 대각선(자기 자신) 칸
+    cmap = matplotlib.colormaps['viridis'].with_extremes(bad='#E5E5E5')
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     titles = ['Distribution difference (mean TV)', 'Selected-unit overlap (Jaccard)']
     for ax, key, title in zip(axes, ['mean_tv', 'unit_jaccard'], titles):
@@ -130,4 +132,44 @@ def _comparison_chart(folder, table, count):
                  'Color scale spans each panel\'s own range, not 0 to 1', fontsize=11)
     fig.tight_layout(rect=[0, 0.03, 1, 0.92])
     fig.savefig(os.path.join(folder, 'comparison.png'), dpi=120)
+    plt.close(fig)
+
+
+def _overview_values(original, entries, column, limit=12):
+    reduced = [entry[0][column] for entry in entries]
+    values = original[column].index.union(pd.Index(np.concatenate([x.index for x in reduced])))
+    matrix = np.array([[series.get(value, 0.0) for value in values] for series in reduced])
+    center = np.median(matrix, axis=0)
+    orig = original[column].reindex(values, fill_value=0).to_numpy()
+    order = np.argsort(np.maximum(orig, matrix.max(axis=0)))[::-1]
+    order = order[:limit]
+    return (values[order], orig[order], center[order], matrix[:, order].min(axis=0),
+            matrix[:, order].max(axis=0))
+
+
+def _overview_chart(folder, original, entries, columns):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    shown = columns[:6]
+    if not shown:
+        return
+    rows = int(np.ceil(len(shown) / 2))
+    fig, axes = plt.subplots(rows, 2, figsize=(13, 3.8 * rows), squeeze=False)
+    for ax, column in zip(axes.ravel(), shown):
+        values, orig, center, low, high = _overview_values(original, entries, column)
+        x = np.arange(len(values))
+        ax.fill_between(x, low * 100, high * 100, color='#54A7E8', alpha=.25,
+                        label='set min–max')
+        ax.plot(x, center * 100, color='#1976B9', marker='o', label='set median')
+        ax.plot(x, orig * 100, color='#62676D', marker='s', linestyle='--', label='original')
+        ax.set_title(column)
+        ax.set_ylabel('%')
+        ax.set_xticks(x, [str(value)[:18] for value in values], rotation=35, ha='right')
+    for ax in axes.ravel()[len(shown):]:
+        ax.axis('off')
+    axes.ravel()[0].legend(fontsize=9)
+    fig.suptitle(f'Distribution overview across {len(entries)} accepted sets')
+    fig.tight_layout(rect=[0, 0, 1, .96])
+    fig.savefig(os.path.join(folder, 'distribution_overview.png'), dpi=120)
     plt.close(fig)

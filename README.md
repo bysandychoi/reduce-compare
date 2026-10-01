@@ -118,6 +118,7 @@ python scripts/run_reduce_units.py "폴더" \
 | `compare_<그룹>.png` | 축소 전후 비교 그래프 (`run_reduce.py`) |
 | `strata_<그룹>.csv` | 층(조합)별 원본·축소 단위 수, 행 수, 비율 차이 (`run_reduce_units.py`) |
 | `sets_<그룹>/set_###.csv` · `sets_<그룹>.csv` | 무작위 세트와 세트별 점수 요약 (`run_reduce_units.py --sets`) |
+| `sets_<그룹>/distribution_overview.png` | 모든 accepted set의 범주별 중앙값·최소~최대 범위를 원본 분포와 비교 |
 | `distribution_<그룹>.csv` · `.png` | 컬럼별 값마다 원본 비율과 축소본 비율, 그래프 (`run_reduce_units.py --show-dist`) |
 
 <br>
