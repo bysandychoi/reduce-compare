@@ -46,6 +46,18 @@ def parse_limits(text: str | None) -> dict[str, int]:
     return out
 
 
+def split_limits(limits: dict[str, int],
+                 unit_cols: list[str]) -> tuple[dict[str, int], dict[str, int]]:
+    """(행 필터용 limit, 단위 컬럼 limit)으로 나눈다.
+
+    행 필터(예: eqp_id=6)를 먼저 적용하고, 단위 컬럼(예: lot_id=100)은 그 뒤 남은 값에서 고른다.
+    그래야 행 필터가 고른 lot을 다시 지워 lot 수가 줄어드는 일이 없다.
+    """
+    unit = {c: n for c, n in limits.items() if c in unit_cols}
+    rows = {c: n for c, n in limits.items() if c not in unit_cols}
+    return rows, unit
+
+
 def choose_values(series: pd.Series, keep_n: int, mode: str = "top",
                   seed: int = 0) -> list[str]:
     """남길 값을 고른다."""

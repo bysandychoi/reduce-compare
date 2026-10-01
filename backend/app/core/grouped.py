@@ -102,6 +102,28 @@ def stratified_units(df: pd.DataFrame, unit_cols: list[str], strata_cols: list[s
                             notes=notes)
 
 
+def units_by_values(df: pd.DataFrame, unit_cols: list[str], strata_cols: list[str],
+                    keep: dict[str, list[str]]) -> GroupedReduction:
+    """단위 컬럼 값(예: 고른 lot 100개)을 가진 행을 통째로 남긴다. 비율 축소는 하지 않는다."""
+    missing = [c for c in keep if c not in unit_cols]
+    if missing:
+        raise ValueError(f"단위 컬럼이 아닙니다: {', '.join(missing)}")
+    mask = np.ones(len(df), dtype=bool)
+    for col, values in keep.items():
+        mask &= df[col].astype(str).isin([str(v) for v in values]).to_numpy()
+    indices = np.flatnonzero(mask)
+    if len(indices) == 0:
+        raise ValueError("고른 값에 해당하는 행이 없습니다")
+    units = unit_table(df, unit_cols, strata_cols)
+    kept = unit_table(df.iloc[indices], unit_cols, strata_cols)
+    picked = ", ".join(f"{c} {len(v):,}개" for c, v in keep.items())
+    notes = [f"{picked}를 골라 그 단위를 모두 남겼습니다 (--ratio 단위 축소 생략)"]
+    return GroupedReduction(indices=indices, weights=_row_weights(df, strata_cols, mask),
+                            unit_cols=list(unit_cols), strata_cols=list(strata_cols),
+                            units_total=len(units), units_kept=len(kept),
+                            strata_total=units["stratum"].nunique(), notes=notes)
+
+
 def _row_weights(df: pd.DataFrame, strata_cols: list[str], keep: np.ndarray) -> np.ndarray:
     """층마다 (원본 행 수 / 남긴 행 수)를 가중치로 준다. 층별 행 비율이 그대로 복원된다."""
     stratum = combo_key(df, strata_cols).to_numpy()
