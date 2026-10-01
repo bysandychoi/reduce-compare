@@ -29,6 +29,7 @@ class Reduction:
     excluded: int = 0
     notes: list[str] = field(default_factory=list)
     members: list[np.ndarray] | None = None   # 대표별 소속 원본 행 (군집 축소기에서 채움)
+    cluster_report: dict | None = None       # 군집별 반영 통계 (T140)
 
     @property
     def size(self) -> int:

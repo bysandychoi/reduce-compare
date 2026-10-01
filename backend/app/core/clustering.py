@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import MiniBatchKMeans
 
+from app.core.cluster_report import cluster_representation_report
 from app.core.sampling import Reduction, _allocate
 
 MIN_PER_CLUSTER = 30        # 희소 군집 최소 대표 수 (T007 결정)
@@ -43,12 +44,28 @@ def _pick_actual(x: np.ndarray, members: np.ndarray) -> int:
     return int(members[np.argmin(np.linalg.norm(x[members] - center, axis=1))])
 
 
-def _plan_allocation(sizes: np.ndarray, n: int, min_per_cluster: int) -> tuple[np.ndarray, int]:
+def _plan_allocation(sizes: np.ndarray, n: int,
+                     min_per_cluster: int) -> tuple[np.ndarray, np.ndarray]:
     """군집 크기에 비례해 대표 수를 나누고, 희소 군집은 최소치를 보장한다 (T036)."""
     alloc = np.minimum(_allocate(np.maximum(sizes, 1), n), sizes.astype(int))
     floor = np.minimum(min_per_cluster, sizes.astype(int))
-    lifted = int((alloc < floor).sum())
-    return np.maximum(alloc, floor), lifted
+    return np.maximum(alloc, floor), alloc < floor
+
+
+def _representation_report(x: np.ndarray, live: np.ndarray, base: MiniBatchKMeans,
+                           groups: list[np.ndarray], lifted: np.ndarray,
+                           min_per_cluster: int) -> dict:
+    mask = np.ones(len(x), dtype=bool)
+    mask[live] = False
+    labels = np.empty(len(x), dtype=int)
+    labels[live] = base.labels_
+    if mask.any():
+        labels[mask] = base.predict(x[mask])
+    sizes = np.bincount(base.labels_, minlength=base.n_clusters)
+    targets = {int(c): int(min(min_per_cluster, sizes[c])) for c in np.flatnonzero(lifted)}
+    report = cluster_representation_report(labels, groups, mask, targets)
+    report["excluded_label_source"] = "nearest_retained_cluster_center"
+    return report
 
 
 def cluster_reduce(x: np.ndarray, n: int, seed: int = 0, virtual: bool = False,
@@ -76,8 +93,8 @@ def cluster_reduce(x: np.ndarray, n: int, seed: int = 0, virtual: bool = False,
     k = base.n_clusters
     sizes = np.bincount(base.labels_, minlength=k).astype(float)
     alloc, lifted = _plan_allocation(sizes, n, min_per_cluster)
-    if lifted:
-        notes.append(f"희소 군집 {lifted}개에 최소 {min_per_cluster}행 보장")
+    if lifted.any():
+        notes.append(f"희소 군집 {int(lifted.sum())}개에 최소 {min_per_cluster}행 보장")
 
     groups: list[np.ndarray] = []
     for c in range(k):
@@ -87,12 +104,12 @@ def cluster_reduce(x: np.ndarray, n: int, seed: int = 0, virtual: bool = False,
         groups.extend(_split_cluster(x, pool, int(max(1, min(alloc[c], len(pool)))), seed))
 
     weights = np.array([len(g) for g in groups], dtype=float)
-    if virtual:
-        return Reduction(indices=np.array([], dtype=int), weights=weights, method="cluster_mean",
-                         frame=None, excluded=total - len(live), notes=notes, members=groups)
-    indices = np.array([_pick_actual(x, g) for g in groups], dtype=int)
-    return Reduction(indices=indices, weights=weights, method="cluster_actual",
-                     excluded=total - len(live), notes=notes, members=groups)
+    indices = np.array([] if virtual else [_pick_actual(x, g) for g in groups], dtype=int)
+    return Reduction(indices=indices, weights=weights,
+                     method="cluster_mean" if virtual else "cluster_actual",
+                     excluded=total - len(live), notes=notes, members=groups,
+                     cluster_report=_representation_report(x, live, base, groups,
+                                                           lifted, min_per_cluster))
 
 
 def virtual_rows(df: pd.DataFrame, reduction: Reduction) -> pd.DataFrame:
