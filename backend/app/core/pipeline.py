@@ -136,10 +136,11 @@ def choose_method(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo], se
 
 def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TARGET,
                        seed: int = 0, projection_method: str = "pca",
-                       projection_dimensions: int = 2) -> GroupPipelineResult:
+                       projection_dimensions: int = 2,
+                       selected: list[str] | None = None) -> GroupPipelineResult:
     """한 스키마 그룹을 병합부터 투영까지 실행한다."""
     frame = merge_group(group.files)
-    prepared = prepare_group(frame, group.columns)
+    prepared = prepare_group(frame, group.columns, selected)
     sized, curve = search_size(
         prepared.frame, prepared.features, group.columns, prepared.used_columns,
         target=target, seed=seed,
@@ -166,18 +167,32 @@ def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TA
 
 def run_folder_pipeline(folder: str, target: float = DEFAULT_TARGET, seed: int = 0,
                         projection_method: str = "pca",
-                        projection_dimensions: int = 2) -> PipelineResult:
+                        projection_dimensions: int = 2,
+                        selections: dict[str, list[str]] | None = None,
+                        merge_decisions: dict[str, bool] | None = None) -> PipelineResult:
     """폴더의 표 파일을 스키마별로 묶어 전체 축소 파이프라인을 실행한다."""
     files = collect_csv_files(folder)
     if not files:
         raise ValueError(f"읽을 수 있는 표 파일을 찾지 못했습니다: {folder}")
     groups = group_by_schema([extract_schema(item) for item in files])
     result = PipelineResult(folder=folder)
+    work: list[tuple[str, str, SchemaGroup]] = []
     for index, group in enumerate(groups):
-        name = chr(ord("A") + index) if index < 26 else f"G{index + 1}"
+        group_id = f"group-{index + 1}"
+        default_name = chr(ord("A") + index) if index < 26 else f"G{index + 1}"
+        if merge_decisions is None or merge_decisions.get(group_id, group.merge):
+            work.append((default_name, group_id, group))
+        else:
+            for file_index, file in enumerate(group.files, start=1):
+                single = SchemaGroup(
+                    key=group.key, files=[file], columns=group.columns, merge=False,
+                )
+                work.append((f"{group_id}-file-{file_index}", group_id, single))
+    for name, group_id, group in work:
         try:
             completed = run_group_pipeline(
                 group, name, target, seed, projection_method, projection_dimensions,
+                (selections or {}).get(group_id),
             )
             result.groups.append(completed)
         except ValueError as exc:
