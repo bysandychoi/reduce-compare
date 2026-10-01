@@ -34,6 +34,8 @@ never an automatic `done`.
 
 Record task and dependency status, scope, non-goals, acceptance criteria, relevant requirements, existing/expected files, tests, edge cases, and line limits. Mark unknown facts as unknown. Task Analysis may only write the task context.
 
+For tasks whose deliverable has a visual form (graph, UI, report, exported image), create a representative `docs/tasks/<TASK_ID>.sample.png` and embed it in the guide as `![Sample output](./<TASK_ID>.sample.png)`. Prefer rendering the real project code with small synthetic data so the sample documents the intended output faithfully. Label it as a sample, never as a completed-result screenshot.
+
 ## Adversarial Review contract
 
 Check every acceptance criterion and relevant empty, missing, malformed, boundary, encoding, numerical, performance, and security case. Each finding includes severity, `file:line`, a reproducible failure, and fix direction. End with exactly one of:

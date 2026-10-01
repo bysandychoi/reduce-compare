@@ -137,7 +137,8 @@ def _comparison_chart(folder, table, count):
 
 def _overview_values(original, entries, column, limit=12):
     reduced = [entry[0][column] for entry in entries]
-    values = original[column].index.union(pd.Index(np.concatenate([x.index for x in reduced])))
+    indexes = [original[column].index.to_numpy(), *(series.index.to_numpy() for series in reduced)]
+    values = pd.Index(pd.unique(np.concatenate(indexes)))
     matrix = np.array([[series.get(value, 0.0) for value in values] for series in reduced])
     center = np.median(matrix, axis=0)
     orig = original[column].reindex(values, fill_value=0).to_numpy()

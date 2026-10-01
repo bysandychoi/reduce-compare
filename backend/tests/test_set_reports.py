@@ -96,6 +96,7 @@ def test_overview_values_cover_all_sets_and_missing_categories():
     entries = [({'category': pd.Series({'x': .6, 'y': .4})}, set()),
                ({'category': pd.Series({'x': .8, 'z': .2})}, set())]
     values, orig, center, low, high = _overview_values(original, entries, 'category')
+    assert len(values) == len(set(values)) == 3
     got = {value: tuple(series[i] for series in (orig, center, low, high))
            for i, value in enumerate(values)}
     assert got['x'] == pytest.approx((.7, .7, .6, .8))
