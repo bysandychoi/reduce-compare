@@ -13,6 +13,7 @@
   --combo   : 비율을 확인할 컬럼 조합 (기본: strata, 여러 번 쓸 수 있음)
   --limit   : 값 종류 줄이기 (예: lot_id=100,eqp_id=6). --unit에 없는 컬럼(eqp_id)을 먼저 거르고,
               --unit 컬럼(lot_id)은 남은 값에서 마지막에 골라 그 단위를 모두 남긴다 (--ratio 생략)
+  --sets    : 기준 점수(--target)를 넘는 서로 다른 무작위 축소 세트를 N개 만든다 (sets_<그룹>/)
 """
 import argparse
 import json
@@ -30,6 +31,7 @@ from app.core.schema import extract_schema, group_by_schema  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from units_limits import apply_limits  # noqa: E402
+from units_sets import make_sets  # noqa: E402
 from units_report import describe, print_distribution, print_result  # noqa: E402
 
 RATIOS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5)
@@ -48,20 +50,23 @@ def try_ratio(df, args, ratio, columns, combos):
 
 
 def reduce_group(df, args, keep, columns, combos):
-    """단위 컬럼 limit이 있으면 그 값의 단위를 모두 남기고, 없으면 --ratio(또는 자동 탐색)로 줄인다."""
+    """단위 컬럼 limit이 있으면 그 값의 단위를 모두 남기고, 없으면 --ratio(또는 자동 탐색)로 줄인다.
+
+    마지막 값은 쓴 단위 비율 (단위 컬럼 limit 경로는 None). --sets가 같은 비율로 세트를 만든다.
+    """
     if keep:
         print("  단위 컬럼 limit이 있어 --ratio 단위 축소는 하지 않습니다")
         red = units_by_values(df, args.unit_cols, args.strata_cols, keep)
         rows = red.rows(df)
-        return red, rows, grouped_similarity(df, rows, red, columns, combos)
+        return red, rows, grouped_similarity(df, rows, red, columns, combos), None
     if args.ratio:
-        return try_ratio(df, args, args.ratio, columns, combos)
+        return (*try_ratio(df, args, args.ratio, columns, combos), args.ratio)
     for ratio in RATIOS:
         red, rows, score = try_ratio(df, args, ratio, columns, combos)
         print(f"  비율 {ratio * 100:>4.0f}% → {len(rows):,}행, {score['total']:.1f}점")
         if score["total"] >= args.target:
             break
-    return red, rows, score
+    return red, rows, score, ratio
 
 
 def pick_dist_columns(df, args, columns):
@@ -114,10 +119,19 @@ def parse_args():
     ap.add_argument("--no-plot", action="store_true", help="분포 그림을 만들지 않음")
     ap.add_argument("--limit", default=None,
                     help="컬럼의 값 종류를 줄인다 (예: eqp_id=6,mask_id=50). 다른 컬럼을 먼저 거르고, "
-                         "--unit 컬럼(예: lot_id=100)은 마지막에 골라 결과에 그 개수만큼 남긴다")
+                         "--unit 컬럼(예: lot_id=100)은 마지막에 고른다. 단위 컬럼을 여러 개 주면 "
+                         "개수가 정확히 맞는 것은 마지막에 적은 컬럼이다")
     ap.add_argument("--limit-mode", default="top", choices=["top", "sample"],
                     help="top=많이 쓰인 순서, sample=원본 비율을 확률로 무작위 (기본 top)")
+    ap.add_argument("--sets", type=int, default=0,
+                    help="기준 점수(--target)를 넘는 서로 다른 무작위 축소 세트를 이 개수만큼 만든다")
+    ap.add_argument("--max-tries", type=int, default=None,
+                    help="--sets 시도 횟수 상한 (기본: 세트 수 × 20)")
     args = ap.parse_args()
+    if args.sets < 0:
+        ap.error("--sets는 0 이상이어야 합니다")
+    if args.max_tries is not None and args.max_tries < 1:
+        ap.error("--max-tries는 1 이상이어야 합니다")
     args.unit_cols, args.strata_cols = split(args.unit), split(args.strata)
     return args
 
@@ -140,7 +154,7 @@ def run_group(df, name, args):
         c for c in df.columns if not c.startswith("_")]
     combos = [split(c) for c in args.combo] or [args.strata_cols]
     started = time.time()
-    red, rows, score = reduce_group(df, args, keep, columns, combos)
+    red, rows, score, ratio = reduce_group(df, args, keep, columns, combos)
     print_result(df, red, rows, score, time.time() - started)
     full_table = distribution_table(df, rows, columns, red.weights, top=args.dist_top)
     print_distribution(full_table, pick_dist_columns(df, args, columns))
@@ -152,6 +166,8 @@ def run_group(df, name, args):
         paths.append(save_distribution_chart(args.out, name, full_table,
                                              pick_dist_columns(df, args, columns), sizes))
     print("\n  저장: " + "\n        ".join(paths))
+    if args.sets:
+        make_sets(df, args, name, ratio, columns, combos, main_score=score["total"])
 
 
 def main():

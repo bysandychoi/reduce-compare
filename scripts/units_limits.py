@@ -31,25 +31,29 @@ def apply_limits(df, args):
     return df, keep, infos + unit_infos
 
 
-def pick_unit_values(df, unit_limits, args):
+def pick_unit_values(df, unit_limits, args, mode=None, seed=None, quiet=False):
     """단위 컬럼 limit을 적힌 순서대로 고른다. 뒤 컬럼이 앞 컬럼 값을 줄일 수 있어,
-    개수가 정확히 보장되는 것은 마지막에 적은 컬럼이다. 화면과 기록에는 실제로 남은 개수를 쓴다."""
+    개수가 정확히 보장되는 것은 마지막에 적은 컬럼이다. 화면과 기록에는 실제로 남은 개수를 쓴다.
+    mode·seed를 주면 --limit-mode·--seed 대신 쓴다 (--sets가 세트마다 다른 lot을 뽑을 때)."""
+    mode = mode or args.limit_mode
+    seed = args.seed if seed is None else seed
     for col, keep_n in unit_limits.items():
         if keep_n < 1:
             raise ValueError(f"{col}: 남길 개수는 1 이상이어야 합니다")
     keep, before, pool = {}, {}, df
     for col, keep_n in unit_limits.items():
         before[col] = pool[col].nunique()
-        keep[col] = choose_values(pool[col], keep_n, args.limit_mode, args.seed)
+        keep[col] = choose_values(pool[col], keep_n, mode, seed)
         pool = pool[pool[col].astype(str).isin(keep[col])]
     if keep and pool.empty:
         raise ValueError("단위 컬럼 limit으로 고른 값이 겹치지 않아 남는 행이 없습니다")
     infos = []
     for col in keep:
         final = sorted(pool[col].astype(str).unique())
-        print_unit_pick(col, before[col], len(keep[col]), len(final), args.limit_mode)
+        if not quiet:
+            print_unit_pick(col, before[col], len(keep[col]), len(final), mode)
         keep[col] = final
         infos.append({"column": col, "unit_column": True, "levels_before": before[col],
                       "levels_picked": unit_limits[col], "levels_after": len(final),
-                      "mode": args.limit_mode, "kept": final})
+                      "mode": mode, "kept": final})
     return keep, infos

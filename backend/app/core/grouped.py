@@ -42,7 +42,16 @@ def combo_key(df: pd.DataFrame, columns: list[str]) -> pd.Series:
         raise ValueError(f"데이터에 없는 컬럼입니다: {', '.join(missing)}")
     if not columns:
         raise ValueError("컬럼을 1개 이상 지정하세요")
-    return df[columns].astype(str).agg(SEP.join, axis=1)
+    parts = df[columns].astype(str)
+    if parts.isna().to_numpy().any():
+        # 결측값 처리는 아직 정해지지 않았다 (T068). 기존 동작을 그대로 유지한다.
+        return parts.agg(SEP.join, axis=1)
+    # 행마다 join을 부르면 수만 행에서 초 단위로 느려져, 열 단위로 이어 붙인다 (결과 문자열은 같다).
+    # 같은 컬럼이 두 번 들어와도 Series가 되도록 위치로 꺼낸다.
+    key = parts.iloc[:, 0]
+    for i in range(1, parts.shape[1]):
+        key = key + SEP + parts.iloc[:, i]
+    return key.rename(None)
 
 
 def unit_table(df: pd.DataFrame, unit_cols: list[str], strata_cols: list[str]) -> pd.DataFrame:
