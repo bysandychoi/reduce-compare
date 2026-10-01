@@ -232,6 +232,7 @@
     fileName: null,
     fileMtime: null,
     loadedAt: null,
+    fileHandle: null,     // FileSystemFileHandle (지원 브라우저에서만) — 있으면 "다시 읽기"가 대화상자 없이 재읽기
     docFiles: {},        // id -> File (<id>.md)
     reviewFiles: {},      // id -> File (<id>.review.md)
     docPaths: new Map(),  // File -> 연결 폴더 기준 경로 (예: "T139.md")
@@ -1027,6 +1028,7 @@
     var parts = ["파일: " + state.fileName];
     if (state.fileMtime) parts.push("파일 수정 시각: " + state.fileMtime.toLocaleString());
     if (state.loadedAt) parts.push("불러온 시각: " + state.loadedAt.toLocaleString());
+    parts.push(state.fileHandle ? "다시 읽기: 선택창 없이 바로 새로고침" : "다시 읽기: 파일 선택창이 다시 열림");
     m.textContent = parts.join(" · ");
   }
 
@@ -1055,13 +1057,31 @@
   }
 
   // ---------- 이벤트 ----------
+  // File System Access API(Chromium 계열)가 있으면 파일 핸들을 보관해 "다시 읽기"가
+  // 선택창 없이 즉시 디스크에서 재읽기하도록 하고, 없으면 기존처럼 선택창을 다시 띄운다.
+  var supportsFileHandle = typeof window.showOpenFilePicker === "function";
+
+  function loadFromHandle(handle) {
+    state.fileHandle = handle;
+    handle.getFile().then(loadFile).catch(function (e) {
+      renderJsonError(new Error("파일을 읽는 중 오류가 발생했습니다: " + e.message));
+    });
+  }
+
   document.getElementById("pickFileBtn").addEventListener("click", function () {
-    document.getElementById("fileInput").click();
+    if (!supportsFileHandle) { document.getElementById("fileInput").click(); return; }
+    window.showOpenFilePicker({ types: [{ description: "JSON", accept: { "application/json": [".json"] } }] })
+      .then(function (handles) { loadFromHandle(handles[0]); })
+      .catch(function (e) { if (e.name !== "AbortError") document.getElementById("fileInput").click(); });
   });
   document.getElementById("fileInput").addEventListener("change", function (e) {
-    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      state.fileHandle = null;
+      loadFile(e.target.files[0]);
+    }
   });
   document.getElementById("reloadBtn").addEventListener("click", function () {
+    if (state.fileHandle) { loadFromHandle(state.fileHandle); return; }
     document.getElementById("fileInput").click();
   });
   document.getElementById("pickDocsBtn").addEventListener("click", function () {
