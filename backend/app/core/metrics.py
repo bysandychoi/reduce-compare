@@ -95,12 +95,13 @@ def _numeric_columns(df: pd.DataFrame, columns: list[ColumnInfo], selected: list
 
 def correlation_metrics(orig: pd.DataFrame, red: pd.DataFrame, columns: list[ColumnInfo],
                         selected: list[str], method: str = "pearson") -> dict:
-    """Pearson/Spearman 상관행렬 보존 (T042/T130); undefined 행렬 값은 0."""
+    """상관 보존 지표와 호환 행렬, 별도의 undefined 마스크를 제공한다."""
     if method not in ("pearson", "spearman"):
         raise ValueError("Correlation method must be pearson or spearman")
     cols = _numeric_columns(orig, columns, selected)
     co = orig[cols].corr(method=method).to_numpy()
     cr = red[cols].corr(method=method).to_numpy()
+    undefined_o, undefined_r = ~np.isfinite(co), ~np.isfinite(cr)
     co, cr = np.nan_to_num(co), np.nan_to_num(cr)
     iu = np.triu_indices(len(cols), k=1)
     pairs_o, pairs_r = co[iu], cr[iu]
@@ -116,6 +117,7 @@ def correlation_metrics(orig: pd.DataFrame, red: pd.DataFrame, columns: list[Col
         "frobenius": round(frob, 4), "mean_gap": round(mean_gap, 4),
         "max_gap": round(max_gap, 4), "corr_of_corr": round(agree, 4),
         "matrix_original": co.round(4).tolist(), "matrix_reduced": cr.round(4).tolist(),
+        "undefined_original": undefined_o.tolist(), "undefined_reduced": undefined_r.tolist(),
     }
     if len(cols) < 2:
         result["note"] = "수치형 컬럼이 2개 미만이라 비교하지 않음"

@@ -80,7 +80,7 @@ def test_all_relationship_classes_and_sign_reversal():
     snapshot = copy.deepcopy(source)
     result = classify_relationships(source, 0.5)
     pairs = {(p["column_a"], p["column_b"]): p for p in result["pairs"]}
-    assert result["counts"] == {"maintained": 2, "lost": 1, "new": 1, "absent": 2}
+    assert result["counts"] == {"maintained": 2, "lost": 1, "new": 1, "absent": 2, "undefined": 0}
     assert pairs["a", "b"]["status"] == "maintained"
     assert pairs["a", "b"]["sign_changed"] is True
     assert pairs["a", "c"]["status"] == "lost"
