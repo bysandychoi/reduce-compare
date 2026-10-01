@@ -69,8 +69,11 @@ python scripts/run_reduce_units.py "폴더" \
     --limit eqp_id=6 --ratio 0.2 --show-dist lot_floor,eqp_floor
 ```
 
+> 📘 묶인 행 데이터 축소는 **[run_reduce_units.py 사용 설명서](docs/guide/run_reduce_units.md)** 에 개념(단위·층)부터
+> `--limit` 적용 순서, 무작위 세트 여러 개 만들기(`--sets`), 화면·그래프 읽는 법까지 정리해 두었습니다.
+
 <details>
-<summary><code>run_reduce_units.py</code> 옵션 자세히</summary>
+<summary><code>run_reduce_units.py</code> 옵션 요약</summary>
 
 - `--unit`: 이 조합이 같은 행은 통째로 남기거나 통째로 뺍니다
 - `--strata`: 이 조합별 비율을 원본과 같게 유지합니다 (드문 조합도 최소 1개)
@@ -79,7 +82,9 @@ python scripts/run_reduce_units.py "폴더" \
 - `--show-dist`: 값별 원본·축소 비율을 표로 출력하고 그래프로 저장 (`distribution_<그룹>.csv`, `.png`)
 - `--no-plot`: 그래프를 만들지 않음
 - `--limit eqp_id=6`: 그 컬럼의 값 종류를 6개로 줄입니다 (많이 쓰인 순서, 남은 값끼리의 비율은 원본 그대로).
-  `--limit-mode sample`을 주면 원본 비율을 확률로 삼아 무작위로 고릅니다
+  `--limit-mode sample`을 주면 원본 비율을 확률로 삼아 무작위로 고릅니다.
+  `--unit` 컬럼(예: `lot_id=100`)은 다른 컬럼을 거른 뒤 마지막에 골라 그 개수만큼 결과에 남깁니다
+- `--sets 100`: 기준 점수를 넘는 서로 다른 무작위 축소 세트를 100개 만듭니다 (`sets_<그룹>/`)
 - `--inspect`: 단위·층 구성만 먼저 확인
 
 </details>
@@ -109,6 +114,7 @@ python scripts/run_reduce_units.py "폴더" \
 | `report_<그룹>.json` | 지표 상세, 크기별 점수, 방식별 점수 |
 | `compare_<그룹>.png` | 축소 전후 비교 그래프 (`run_reduce.py`) |
 | `strata_<그룹>.csv` | 층(조합)별 원본·축소 단위 수, 행 수, 비율 차이 (`run_reduce_units.py`) |
+| `sets_<그룹>/set_###.csv` · `sets_<그룹>.csv` | 무작위 세트와 세트별 점수 요약 (`run_reduce_units.py --sets`) |
 | `distribution_<그룹>.csv` · `.png` | 컬럼별 값마다 원본 비율과 축소본 비율, 그래프 (`run_reduce_units.py --show-dist`) |
 
 <br>
