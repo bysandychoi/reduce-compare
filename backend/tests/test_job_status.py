@@ -53,7 +53,7 @@ def test_status_reports_running_stage_and_failure(tmp_path, monkeypatch):
     assert failed["state"] == "failed"
     assert failed["progress"] == 20
     assert failed["stage"] == "실패"
-    assert failed["error"] == "의도한 실패"
+    assert failed["error"] == "축소 및 평가 단계에서 실패했습니다: 의도한 실패"
 
 
 def test_status_rejects_missing_job(tmp_path, monkeypatch):

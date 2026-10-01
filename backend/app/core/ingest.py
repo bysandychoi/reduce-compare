@@ -105,7 +105,7 @@ def read_csv(path: str, encoding: str | None = None,
     except pd.errors.EmptyDataError as e:
         raise ValueError(f"내용이 없는 CSV입니다: {os.path.basename(path)}") from e
     except pd.errors.ParserError as e:
-        raise ValueError(f"CSV 형식을 해석하지 못했습니다: {os.path.basename(path)} ({e})") from e
+        raise ValueError(f"CSV 형식을 해석하지 못했습니다: {os.path.basename(path)}") from e
     if df.shape[1] == 0:
         raise ValueError(f"컬럼이 없는 CSV입니다: {os.path.basename(path)}")
     return df, enc

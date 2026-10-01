@@ -57,15 +57,34 @@ def job_directory(job_id: str) -> Path:
 
 def calculate_groups(job_id: str) -> tuple[Path, list[SchemaGroup]]:
     directory = job_directory(job_id)
-    files = collect_csv_files(str(directory / "uploads"))
+    try:
+        files = collect_csv_files(str(directory / "uploads"))
+    except OSError as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "업로드 폴더를 읽을 수 없습니다"
+        ) from error
     if not files:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, "읽을 수 있는 표 파일이 없습니다"
         )
-    try:
-        groups = group_by_schema([extract_schema(file) for file in files])
-    except (OSError, UnicodeError, ValueError) as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+    schemas = []
+    for file in files:
+        try:
+            schemas.append(extract_schema(file))
+        except UnicodeError as error:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"파일 인코딩을 읽을 수 없습니다: {file.name}",
+            ) from error
+        except ValueError as error:
+            message = str(error).strip() or f"표 파일이 올바르지 않습니다: {file.name}"
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, message) from error
+        except OSError as error:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"표 파일을 읽을 수 없습니다: {file.name}",
+            ) from error
+    groups = group_by_schema(schemas)
     return directory, groups
 
 
