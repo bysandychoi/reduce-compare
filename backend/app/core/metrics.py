@@ -95,23 +95,28 @@ def _numeric_columns(df: pd.DataFrame, columns: list[ColumnInfo], selected: list
 
 def correlation_metrics(orig: pd.DataFrame, red: pd.DataFrame, columns: list[ColumnInfo],
                         selected: list[str], method: str = "pearson") -> dict:
-    """상관행렬 보존 정도 (T042). Frobenius 차이와 상관계수끼리의 상관."""
+    """Pearson/Spearman 상관행렬 보존 (T042/T130); undefined 행렬 값은 0."""
+    if method not in ("pearson", "spearman"):
+        raise ValueError("Correlation method must be pearson or spearman")
     cols = _numeric_columns(orig, columns, selected)
-    if len(cols) < 2:
-        return {"score": 100.0, "columns": cols, "note": "수치형 컬럼이 2개 미만이라 비교하지 않음"}
     co = orig[cols].corr(method=method).to_numpy()
     cr = red[cols].corr(method=method).to_numpy()
     co, cr = np.nan_to_num(co), np.nan_to_num(cr)
     iu = np.triu_indices(len(cols), k=1)
     pairs_o, pairs_r = co[iu], cr[iu]
     frob = float(np.linalg.norm(co - cr))
-    max_gap = float(np.abs(pairs_o - pairs_r).max())
-    mean_gap = float(np.abs(pairs_o - pairs_r).mean())
-    agree = float(np.corrcoef(pairs_o, pairs_r)[0, 1]) if len(pairs_o) > 1 else 1.0
+    max_gap = float(np.abs(pairs_o - pairs_r).max()) if len(pairs_o) else 0.0
+    mean_gap = float(np.abs(pairs_o - pairs_r).mean()) if len(pairs_o) else 0.0
+    agree = 1.0 if np.array_equal(pairs_o, pairs_r) or len(pairs_o) < 2 else 0.0
+    if len(pairs_o) > 1 and np.std(pairs_o) > 0 and np.std(pairs_r) > 0:
+        agree = float(np.corrcoef(pairs_o, pairs_r)[0, 1])
     score = 100 * (1 - min(1.0, 0.6 * mean_gap + 0.4 * max_gap))
-    return {
+    result = {
         "score": round(score, 1), "columns": cols, "method": method,
         "frobenius": round(frob, 4), "mean_gap": round(mean_gap, 4),
         "max_gap": round(max_gap, 4), "corr_of_corr": round(agree, 4),
         "matrix_original": co.round(4).tolist(), "matrix_reduced": cr.round(4).tolist(),
     }
+    if len(cols) < 2:
+        result["note"] = "수치형 컬럼이 2개 미만이라 비교하지 않음"
+    return result
