@@ -75,6 +75,7 @@ def test_run_uses_saved_column_and_group_configuration(tmp_path, monkeypatch):
     assert captured["merge_decisions"] == {"group-1": False}
     state = json.loads((tmp_path / job_id / "run.json").read_text(encoding="utf-8"))
     assert state["state"] == "failed"
+    assert state["progress"] == 20
 
 
 def test_background_run_writes_result_and_done_state(tmp_path, monkeypatch):
@@ -87,7 +88,7 @@ def test_background_run_writes_result_and_done_state(tmp_path, monkeypatch):
     directory = tmp_path / job_id
     state = json.loads((directory / "run.json").read_text(encoding="utf-8"))
     result = json.loads((directory / "result.json").read_text(encoding="utf-8"))
-    assert state == {"state": "done"}
+    assert state == {"state": "done", "progress": 100, "stage": "완료"}
     assert result["folder"] == "uploads"
     assert result["groups"][0]["original_rows"] == 80
 
