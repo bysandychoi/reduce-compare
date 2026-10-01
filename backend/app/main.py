@@ -14,6 +14,7 @@ from app.api.groups import router as groups_router
 from app.api.jobs import router as jobs_router
 from app.api.results import router as results_router
 from app.api.runs import router as runs_router
+from app.api.visualizations import router as visualizations_router
 
 app = FastAPI(
     title="Reduce & Compare API",
@@ -25,6 +26,7 @@ app.include_router(groups_router)
 app.include_router(columns_router)
 app.include_router(runs_router)
 app.include_router(results_router)
+app.include_router(visualizations_router)
 
 
 class Health(BaseModel):
