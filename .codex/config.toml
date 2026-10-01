@@ -1,0 +1,4 @@
+# Repository-local Codex defaults.
+# Keep changes sandboxed to this workspace while avoiding approval prompts.
+approval_policy = "never"
+sandbox_mode = "workspace-write"
