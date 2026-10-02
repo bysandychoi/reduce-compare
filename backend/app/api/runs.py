@@ -73,6 +73,16 @@ def _failure_message(stage: str, error: Exception) -> str:
     return f"{stage} 단계에서 실패했습니다: {reason}"
 
 
+def _save_reduced_frames(directory: Path, groups: list) -> None:
+    """완료 그룹 순서와 같은 파일명으로 축소 프레임을 원자적으로 저장한다."""
+    reduced_dir = directory / "reduced"
+    reduced_dir.mkdir(exist_ok=True)
+    for index, group in enumerate(groups):
+        temporary = reduced_dir / f"group-{index + 1}.csv.tmp"
+        group.chosen.frame.to_csv(temporary, index=False, encoding="utf-8-sig")
+        temporary.replace(reduced_dir / f"group-{index + 1}.csv")
+
+
 def read_run_status(directory: Path, job_id: str) -> RunStatus:
     path = directory / "run.json"
     transient_error = None
@@ -122,6 +132,7 @@ def _execute(job_id: str, directory: Path, options: RunOptions,
             selections=selections, merge_decisions=decisions,
         )
         core.folder = "uploads"
+        _save_reduced_frames(directory, core.groups)
         progress = 90
         stage = "결과 저장"
         _write_json(directory / "run.json", {

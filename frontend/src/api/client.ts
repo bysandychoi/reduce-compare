@@ -125,6 +125,10 @@ export function getResult(jobId: string, options: ApiOptions = {}) {
   return request<PipelineResults>(`/jobs/${segment(jobId)}/result`, { signal: options.signal });
 }
 
+export function resultDownloadUrl(jobId: string, groupName: string) {
+  return `${API_BASE}/jobs/${segment(jobId)}/result/${segment(groupName)}/download`;
+}
+
 export function getVisualization(jobId: string, view: VisualizationOptions, options: ApiOptions = {}) {
   const query = new URLSearchParams({ group: view.group });
   if (view.mode !== undefined) query.set("mode", view.mode);

@@ -1,6 +1,8 @@
 """완료된 축소 결과 조회 API 테스트 (T064)."""
 import json
+from io import StringIO
 
+import pandas as pd
 from fastapi.testclient import TestClient
 
 from app.api import jobs, runs
@@ -33,6 +35,23 @@ def test_result_returns_completed_pipeline_schema(tmp_path, monkeypatch):
     assert payload["groups"][0]["size_curve"]
     assert payload["groups"][0]["method_scores"]
     assert payload["groups"][0]["projection"]["original"]
+
+    group_name = payload["groups"][0]["name"]
+    download = client.get(f"/jobs/{job_id}/result/{group_name}/download")
+    assert download.status_code == 200
+    frame = pd.read_csv(StringIO(download.content.decode("utf-8-sig")))
+    assert len(frame) == payload["groups"][0]["reduced_rows"]
+    assert "attachment" in download.headers["content-disposition"]
+
+
+def test_result_download_rejects_unknown_group(tmp_path, monkeypatch):
+    job_id = _create_job(tmp_path, monkeypatch)
+    client.post(f"/jobs/{job_id}/run", json={"target": 0})
+    runs.RUNS[job_id].result(timeout=30)
+
+    response = client.get(f"/jobs/{job_id}/result/missing/download")
+
+    assert response.status_code == 404
 
 
 def test_result_rejects_not_started_and_failed_run(tmp_path, monkeypatch):

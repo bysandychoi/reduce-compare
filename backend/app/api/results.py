@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
 from app.api.groups import job_directory
@@ -37,3 +38,18 @@ def get_result(job_id: str) -> PipelineResults:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, "완료 결과가 올바른 스키마가 아닙니다"
         ) from exc
+
+
+@router.get("/jobs/{job_id}/result/{group_name}/download", response_class=FileResponse)
+def download_result(job_id: str, group_name: str) -> FileResponse:
+    """완료 결과에서 선택한 그룹의 축소 행을 CSV로 내려준다."""
+    result = get_result(job_id)
+    index = next((i for i, group in enumerate(result.groups) if group.name == group_name), None)
+    if index is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "결과 그룹을 찾을 수 없습니다")
+    path = job_directory(job_id) / "reduced" / f"group-{index + 1}.csv"
+    if not path.is_file():
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "축소본 CSV 파일이 없습니다")
+    return FileResponse(
+        path, media_type="text/csv; charset=utf-8", filename=f"{group_name}-reduced.csv"
+    )

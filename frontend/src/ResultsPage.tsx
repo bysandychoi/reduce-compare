@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { ApiError, getResult, type GroupResult, type PipelineResults } from "./api/client";
+import { ApiError, getResult, resultDownloadUrl, type GroupResult, type PipelineResults } from "./api/client";
 import MethodScoreBars from "./MethodScoreBars";
 import MetricTable from "./MetricTable";
 import SizeScoreChart from "./SizeScoreChart";
@@ -15,12 +15,14 @@ function errorMessage(error: unknown) {
   return error instanceof ApiError ? error.message : "결과를 불러오지 못했습니다";
 }
 
-function GroupSummary({ group, target }: { group: GroupResult; target: number }) {
+function GroupSummary({ group, target, jobId }: { group: GroupResult; target: number; jobId: string }) {
   return (
     <section className="result-group" role="tabpanel" id={`panel-${group.name}`} aria-labelledby={`tab-${group.name}`}>
       <div className="result-group__header">
         <div><span>선택한 그룹</span><h3>{group.name}</h3></div>
-        <strong>{group.files.length}개 파일</strong>
+        <div className="result-group__actions"><strong>{group.files.length}개 파일</strong>
+          <a className="download-button" href={resultDownloadUrl(jobId, group.name)} download={`${group.name}-reduced.csv`}>축소본 CSV 다운로드</a>
+        </div>
       </div>
       <SummaryCards group={group} />
       <MetricTable group={group} />
@@ -31,7 +33,7 @@ function GroupSummary({ group, target }: { group: GroupResult; target: number })
   );
 }
 
-function ReadyResults({ result }: { result: PipelineResults }) {
+function ReadyResults({ result, jobId }: { result: PipelineResults; jobId: string }) {
   const [selected, setSelected] = useState(result.groups[0]?.name ?? "");
   useEffect(() => setSelected(result.groups[0]?.name ?? ""), [result]);
   const group = result.groups.find((item) => item.name === selected) ?? result.groups[0];
@@ -59,7 +61,7 @@ function ReadyResults({ result }: { result: PipelineResults }) {
         }}
       >{item.name}<span>{item.reduced_rows.toLocaleString()}행</span></button>)}
     </div>
-    <GroupSummary key={group.name} group={group} target={result.target} />
+    <GroupSummary key={group.name} group={group} target={result.target} jobId={jobId} />
     {!!result.skipped.length && <aside className="result-skipped">
       <strong>처리하지 못한 그룹 {result.skipped.length}개</strong>
       {result.skipped.map((item) => <span key={item.name}>{item.name} · {item.reason}</span>)}
@@ -89,6 +91,6 @@ export default function ResultsPage({ jobId }: { jobId: string | null }) {
     <p className="lead">그룹 탭을 선택해 해당 결과를 확인하세요.</p>
     {state.status === "loading" && <div className="result-loading" role="status">결과를 불러오고 있습니다…</div>}
     {state.status === "error" && <div className="result-error" role="alert"><strong>결과를 불러오지 못했습니다</strong><span>{state.message}</span><button type="button" className="text-button" onClick={() => setReload((value) => value + 1)}>다시 불러오기</button></div>}
-    {state.status === "ready" && <ReadyResults result={state.result} />}
+    {state.status === "ready" && <ReadyResults result={state.result} jobId={jobId} />}
   </section>;
 }
