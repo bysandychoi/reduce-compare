@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { ApiError, getResult, type GroupResult, type PipelineResults } from "./api/client";
+import MethodScoreBars from "./MethodScoreBars";
 import MetricTable from "./MetricTable";
 import SizeScoreChart from "./SizeScoreChart";
 import SummaryCards from "./SummaryCards";
@@ -24,6 +25,7 @@ function GroupSummary({ group, target }: { group: GroupResult; target: number })
       <SummaryCards group={group} />
       <MetricTable group={group} />
       <SizeScoreChart group={group} target={target} />
+      <MethodScoreBars group={group} />
       <p className="result-files">파일 · {group.files.join(", ")}</p>
     </section>
   );
