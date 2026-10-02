@@ -1,6 +1,12 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes } from "react";
 
-type SelectedFile = { file: File; path: string };
+import type { UploadItem } from "./api/client";
+
+type SelectedFile = UploadItem;
+type FolderPickerProps = {
+  disabled?: boolean;
+  onSelectionChange?: (files: UploadItem[]) => void;
+};
 type DirectoryInputProps = InputHTMLAttributes<HTMLInputElement> & {
   directory?: string;
   webkitdirectory?: string;
@@ -57,10 +63,11 @@ async function droppedFiles(dataTransfer: DataTransfer): Promise<SelectedFile[]>
   return Array.from(dataTransfer.files).map((file) => ({ file, path: file.webkitRelativePath || file.name }));
 }
 
-function SelectionPreview({ files, excluded, onClear }: {
+function SelectionPreview({ files, excluded, onClear, disabled }: {
   files: SelectedFile[];
   excluded: number;
   onClear: () => void;
+  disabled: boolean;
 }) {
   const totalSize = files.reduce((sum, item) => sum + item.file.size, 0);
   return (
@@ -73,7 +80,7 @@ function SelectionPreview({ files, excluded, onClear }: {
             {excluded > 0 && <span> · 지원하지 않는 파일 {excluded}개 제외</span>}
           </p>
         </div>
-        <button type="button" className="text-button" onClick={onClear}>선택 지우기</button>
+        <button type="button" className="text-button" disabled={disabled} onClick={onClear}>선택 지우기</button>
       </div>
       {files.length > 0 ? (
         <ul className="file-list">
@@ -91,7 +98,7 @@ function SelectionPreview({ files, excluded, onClear }: {
   );
 }
 
-export default function FolderPicker() {
+export default function FolderPicker({ disabled = false, onSelectionChange }: FolderPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [files, setFiles] = useState<SelectedFile[]>([]);
@@ -101,9 +108,11 @@ export default function FolderPicker() {
 
   function applySelection(selection: SelectedFile[]) {
     const supported = selection.filter((item) => isSupported(item.path));
-    setFiles(supported.sort((left, right) => left.path.localeCompare(right.path, "ko")));
+    const sorted = supported.sort((left, right) => left.path.localeCompare(right.path, "ko"));
+    setFiles(sorted);
     setExcluded(selection.length - supported.length);
     setHasSelection(true);
+    onSelectionChange?.(sorted);
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -119,6 +128,7 @@ export default function FolderPicker() {
     event.preventDefault();
     dragDepth.current = 0;
     setIsDragging(false);
+    if (disabled) return;
     try {
       applySelection(await droppedFiles(event.dataTransfer));
     } catch {
@@ -126,18 +136,20 @@ export default function FolderPicker() {
     }
   }
 
-  function clearSelection() {
-    setFiles([]);
-    setExcluded(0);
-    setHasSelection(false);
-  }
+  function clearSelection() { setFiles([]); setExcluded(0); setHasSelection(false); onSelectionChange?.([]); }
 
   return (
     <div className="folder-picker">
       <div
         className={`drop-zone${isDragging ? " drop-zone--active" : ""}`}
-        onDragEnter={(event) => { event.preventDefault(); dragDepth.current += 1; setIsDragging(true); }}
-        onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          if (!disabled) { dragDepth.current += 1; setIsDragging(true); }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = disabled ? "none" : "copy";
+        }}
         onDragLeave={(event) => {
           event.preventDefault();
           dragDepth.current = Math.max(0, dragDepth.current - 1);
@@ -152,18 +164,21 @@ export default function FolderPicker() {
           type="file"
           accept=".csv,.tsv,.txt"
           multiple
+          disabled={disabled}
           onChange={handleChange}
           aria-label="데이터 폴더 선택"
         />
         <span className="drop-zone__icon" aria-hidden="true">{isDragging ? "↓" : "+"}</span>
         <strong>{isDragging ? "여기에 폴더를 놓으세요" : "폴더를 끌어다 놓으세요"}</strong>
         <span>또는 이 컴퓨터에서 폴더를 선택하세요</span>
-        <button type="button" className="primary-button" onClick={() => inputRef.current?.click()}>
+        <button type="button" className="primary-button" disabled={disabled} onClick={() => inputRef.current?.click()}>
           {hasSelection ? "다른 폴더 선택" : "폴더 선택"}
         </button>
       </div>
 
-      {hasSelection && <SelectionPreview files={files} excluded={excluded} onClear={clearSelection} />}
+      {hasSelection && (
+        <SelectionPreview files={files} excluded={excluded} disabled={disabled} onClear={clearSelection} />
+      )}
     </div>
   );
 }

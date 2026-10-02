@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
-import FolderPicker from "./FolderPicker";
+import UploadPage from "./UploadPage";
 import { getHealth } from "./api/client";
 
 type ConnectionState =
@@ -49,17 +49,6 @@ function AppLink({ children, href, onNavigate, active = false }: {
     onNavigate(href);
   }
   return <a href={href} onClick={handleClick} aria-current={active ? "page" : undefined}>{children}</a>;
-}
-
-function UploadPage() {
-  return (
-    <section className="page-card" aria-labelledby="upload-title">
-      <span className="eyebrow">1단계 · 데이터 준비</span>
-      <h2 id="upload-title">분석할 데이터 폴더를 선택하세요</h2>
-      <p className="lead">CSV, TSV, 구분자 텍스트 파일을 전송 전에 확인할 수 있습니다.</p>
-      <FolderPicker />
-    </section>
-  );
 }
 
 function ResultsPage() {
