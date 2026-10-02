@@ -9,7 +9,7 @@ import pandas as pd
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib import font_manager  # noqa: E402
+from matplotlib import font_manager, ft2font  # noqa: E402
 from sklearn.decomposition import PCA  # noqa: E402
 
 # 원본은 바탕 기준 회색, 축소본은 파란색 (회색 대비 ΔE 22.4, 색각 이상 시뮬레이션 최저 ΔE 12.3)
@@ -22,11 +22,21 @@ LABELS_EN = {"orig": "original", "red": "reduced", "dist": "distribution",
              "group": "group ratio (%)", "title": "before / after reduction"}
 
 
+def _has_hangul(path: str) -> bool:
+    """글꼴 파일에 서로 다른 실제 한글 글리프가 있는지 확인한다."""
+    try:
+        face = ft2font.FT2Font(path)
+    except (OSError, RuntimeError, ValueError):
+        return False
+    glyphs = [face.get_char_index(ord(character)) for character in "원본가"]
+    return all(glyphs) and len(set(glyphs)) == len(glyphs)
+
+
 def _pick_font() -> dict:
     """한글 글꼴이 있으면 한글 라벨, 없으면 영문 라벨을 쓴다."""
-    available = {f.name for f in font_manager.fontManager.ttflist}
     for name in KOREAN_FONTS:
-        if name in available:
+        matches = [font for font in font_manager.fontManager.ttflist if font.name == name]
+        if matches and all(_has_hangul(font.fname) for font in matches):
             plt.rcParams["font.family"] = name
             plt.rcParams["axes.unicode_minus"] = False
             return LABELS_KO
@@ -86,7 +96,10 @@ def save_comparison(out_dir: str, name: str, prepared, best, sample: int = 20000
     if numeric:
         col = numeric[0]
         bins = np.linspace(df[col].quantile(0.001), df[col].quantile(0.999), 40)
-        ax[1, 0].hist(df[col], bins=bins, density=True, color=ORIG, alpha=0.45, label=labels["orig"])
+        ax[1, 0].hist(
+            df[col], bins=bins, density=True, color=ORIG, alpha=0.45,
+            label=labels["orig"],
+        )
         ax[1, 0].hist(red_df[col], bins=bins, weights=w, density=True, histtype="step",
                       lw=2, color=RED, label=labels["red"])
         ax[1, 0].set_title(f"{labels['dist']} · {col}", fontsize=11)
