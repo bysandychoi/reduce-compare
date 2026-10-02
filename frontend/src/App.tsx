@@ -1,6 +1,7 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 import UploadPage from "./UploadPage";
+import ResultsPage from "./ResultsPage";
 import { getHealth } from "./api/client";
 
 type ConnectionState =
@@ -51,21 +52,6 @@ function AppLink({ children, href, onNavigate, active = false }: {
   return <a href={href} onClick={handleClick} aria-current={active ? "page" : undefined}>{children}</a>;
 }
 
-function ResultsPage() {
-  return (
-    <section className="page-card" aria-labelledby="results-title">
-      <span className="eyebrow">분석 결과</span>
-      <h2 id="results-title">축소 결과를 한눈에 비교합니다</h2>
-      <p className="lead">처리가 완료되면 유사도 점수와 원본·축소본 비교가 이곳에 표시됩니다.</p>
-      <div className="empty-panel empty-panel--results">
-        <span className="empty-panel__icon" aria-hidden="true">○</span>
-        <strong>표시할 결과가 없습니다</strong>
-        <span>먼저 업로드 화면에서 데이터 폴더를 선택하세요.</span>
-      </div>
-    </section>
-  );
-}
-
 export default function App() {
   const [route, setRoute] = useState<Route>(currentRoute);
   const connection = useConnection();
@@ -103,7 +89,7 @@ export default function App() {
       </header>
       <main>
         {route === "/" && <UploadPage onComplete={(jobId) => navigate(`/results?job=${encodeURIComponent(jobId)}`)} />}
-        {route === "/results" && <ResultsPage />}
+        {route === "/results" && <ResultsPage jobId={new URLSearchParams(window.location.search).get("job")} />}
         {route === "not-found" && (
           <section className="page-card not-found" aria-labelledby="not-found-title">
             <span className="eyebrow">404</span>

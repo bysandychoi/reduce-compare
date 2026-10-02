@@ -461,6 +461,24 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .empty-panel strong { color: var(--ink); font-size: 17px; }
 .empty-panel__icon { color: #52789b; font-size: 42px; font-weight: 300; line-height: 1; }
 .empty-panel--results { border-style: solid; }
+.result-loading, .result-error { margin-top: 34px; padding: 20px; border-radius: 14px; }
+.result-loading { background: var(--panel-soft); color: var(--sub); }
+.result-error { display: flex; flex-direction: column; align-items: flex-start; background: #fff0f0; color: #842d2d; }
+.result-tabs { display: flex; gap: 8px; margin-top: 34px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.result-tabs button { display: flex; flex: 0 0 auto; flex-direction: column; min-width: 120px; padding: 12px 18px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--sub); font: inherit; font-weight: 700; cursor: pointer; }
+.result-tabs button span { font-size: 11px; font-weight: 500; }
+.result-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent); }
+.result-group { margin-top: 24px; padding: 24px; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 18px; }
+.result-group__header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.result-group__header span, .result-method, .result-files { color: var(--sub); font-size: 13px; }
+.result-group__header h3 { margin: 2px 0 0; font-size: 25px; }
+.result-method { margin: 18px 0; }
+.score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0; }
+.score-grid div { padding: 15px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.score-grid dt { color: var(--sub); font-size: 12px; }
+.score-grid dd { margin: 2px 0 0; color: var(--accent); font-size: 24px; font-weight: 800; }
+.result-files { margin: 18px 0 0; overflow-wrap: anywhere; }
+.result-skipped { display: flex; flex-direction: column; gap: 5px; margin-top: 18px; padding: 15px; background: #fff6e6; border: 1px solid #ead5aa; border-radius: 12px; color: #72551d; font-size: 13px; }
 .not-found { text-align: center; }
 
 .not-found a {
@@ -502,4 +520,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .stratify-note { align-items: flex-start; flex-direction: column; gap: 3px; }
   .run-panel { grid-template-columns: 1fr; align-items: stretch; }
   .run-button { width: 100%; }
+  .result-group__header { align-items: flex-start; flex-direction: column; }
+  .score-grid { grid-template-columns: repeat(2, 1fr); }
 }
