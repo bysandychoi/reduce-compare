@@ -95,17 +95,20 @@ def get_visualization(
     bins: int = Query(default=50, ge=5, le=100),
     seed: int = 0,
     projection_method: Literal["pca", "umap"] | None = None,
+    projection_dimensions: int | None = Query(default=None, ge=2, le=3),
 ) -> VisualizationData:
     result = get_result(job_id)
     selected = _group(result, group)
-    if projection_method is not None and projection_method != selected.projection.method:
+    method = projection_method or selected.projection.method
+    dimensions = projection_dimensions or selected.projection.dimensions
+    if method != selected.projection.method or dimensions != selected.projection.dimensions:
         index = next(i for i, item in enumerate(result.groups) if item.name == group)
         path = job_directory(job_id) / "projection-source" / f"group-{index + 1}.npz"
         if not path.is_file():
             raise HTTPException(status.HTTP_409_CONFLICT, "투영 방식 전환 자료가 없습니다")
         with np.load(path) as source:
             projected = project_comparison(
-                source["original"], source["reduced"], projection_method, 2, seed,
+                source["original"], source["reduced"], method, dimensions, seed,
             )
         selected = selected.model_copy(update={"projection": _projection_model(projected)})
     return build_visualization(selected, mode, max_points, bins, seed)

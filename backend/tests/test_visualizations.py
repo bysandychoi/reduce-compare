@@ -36,9 +36,11 @@ def _write_result(tmp_path, monkeypatch, count=100_000, method="pca"):
     )
     source = directory / "projection-source"
     source.mkdir()
+    features = np.column_stack([
+        np.asarray(points), np.arange(count) % 7, np.arange(count) % 11,
+    ])
     np.savez_compressed(
-        source / "group-1.npz", original=np.asarray(points),
-        reduced=np.asarray(projection["reduced"]),
+        source / "group-1.npz", original=features, reduced=features[::100],
     )
     return job_id
 
@@ -49,7 +51,7 @@ def test_sample_mode_limits_points_and_keeps_indices(tmp_path, monkeypatch):
         f"/jobs/{job_id}/visualization", params={"group": "A", "max_points": 300, "seed": 7}
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     payload = response.json()
     assert payload["mode"] == "sample"
     assert payload["projection_method"] == "pca"
@@ -99,3 +101,17 @@ def test_visualization_switches_projection_method(tmp_path, monkeypatch):
     assert payload["projection_method"] == "pca"
     assert payload["dimensions"] == 2
     assert len(payload["original_points"]) == 50
+
+
+def test_visualization_switches_to_three_dimensions(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=100)
+
+    response = client.get(
+        f"/jobs/{job_id}/visualization",
+        params={"group": "A", "projection_dimensions": 3, "max_points": 30},
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["dimensions"] == 3
+    assert all(len(point) == 3 for point in payload["original_points"])

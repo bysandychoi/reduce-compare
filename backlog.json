@@ -155,7 +155,7 @@
     {"id": "T085", "epic": "E8", "title": "축소본 CSV 다운로드", "description": "선택된 축소본 행을 CSV로 다운로드", "estimate_min": 20, "depends_on": ["T064", "T080"], "acceptance_criteria": ["다운로드 파일 행 수 = 축소 행 수"], "status": "done"},
     {"id": "T090", "epic": "E9", "title": "그래프 컨테이너와 종류 선택", "description": "그래프 종류 선택 드롭다운과 원본/축소본 나란히·겹쳐보기 전환", "estimate_min": 25, "depends_on": ["T080"], "acceptance_criteria": ["종류·보기 모드 전환 동작"], "status": "done"},
     {"id": "T091", "epic": "E9", "title": "2D 산점도 비교", "description": "PCA/UMAP 투영 결과를 원본(밀도/서브샘플)과 축소본으로 표시", "estimate_min": 30, "depends_on": ["T065", "T090"], "acceptance_criteria": ["투영 방법 전환 가능", "축 범위 동기화"], "status": "done"},
-    {"id": "T092", "epic": "E9", "title": "3D 산점도 비교", "description": "3D 투영 좌표 표시, 회전 가능", "estimate_min": 25, "depends_on": ["T091"], "acceptance_criteria": ["원본·축소본 카메라 동기화"], "status": "review"},
+    {"id": "T092", "epic": "E9", "title": "3D 산점도 비교", "description": "3D 투영 좌표 표시, 회전 가능", "estimate_min": 25, "depends_on": ["T091"], "acceptance_criteria": ["원본·축소본 카메라 동기화"], "status": "done"},
     {"id": "T093", "epic": "E9", "title": "히스토그램 비교", "description": "선택 컬럼의 원본·축소본 분포를 정규화 히스토그램으로 겹쳐 표시", "estimate_min": 25, "depends_on": ["T090"], "acceptance_criteria": ["컬럼 선택 시 즉시 갱신"], "status": "todo"},
     {"id": "T094", "epic": "E9", "title": "박스플롯 비교", "description": "수치형 컬럼들의 원본·축소본 박스플롯", "estimate_min": 20, "depends_on": ["T090"], "acceptance_criteria": ["컬럼별 원본·축소본 쌍 표시"], "status": "todo"},
     {"id": "T095", "epic": "E9", "title": "범주 비율 비교", "description": "범주형 컬럼 비율 막대 비교", "estimate_min": 20, "depends_on": ["T090"], "acceptance_criteria": ["범주별 비율 차이 표시"], "status": "todo"},

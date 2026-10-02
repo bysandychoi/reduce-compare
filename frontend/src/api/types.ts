@@ -104,6 +104,7 @@ export type VisualizationOptions = {
   bins?: number;
   seed?: number;
   projection_method?: ProjectionMethod;
+  projection_dimensions?: 2 | 3;
 };
 export type VisualizationData = {
   group: string;

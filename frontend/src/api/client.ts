@@ -136,6 +136,7 @@ export function getVisualization(jobId: string, view: VisualizationOptions, opti
   if (view.bins !== undefined) query.set("bins", String(view.bins));
   if (view.seed !== undefined) query.set("seed", String(view.seed));
   if (view.projection_method !== undefined) query.set("projection_method", view.projection_method);
+  if (view.projection_dimensions !== undefined) query.set("projection_dimensions", String(view.projection_dimensions));
   return request<VisualizationData>(
     `/jobs/${segment(jobId)}/visualization?${query.toString()}`,
     { signal: options.signal },
