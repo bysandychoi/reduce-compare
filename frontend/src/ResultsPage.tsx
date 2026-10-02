@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { ApiError, getResult, type GroupResult, type PipelineResults } from "./api/client";
+import SummaryCards from "./SummaryCards";
 
 type ResultState =
   | { status: "loading" }
@@ -12,20 +13,13 @@ function errorMessage(error: unknown) {
 }
 
 function GroupSummary({ group }: { group: GroupResult }) {
-  const scores = [
-    ["종합", group.score.total], ["분포", group.score.distribution],
-    ["상관", group.score.correlation], ["구조", group.score.structure],
-  ];
   return (
     <section className="result-group" role="tabpanel" id={`panel-${group.name}`} aria-labelledby={`tab-${group.name}`}>
       <div className="result-group__header">
         <div><span>선택한 그룹</span><h3>{group.name}</h3></div>
-        <strong>{group.original_rows.toLocaleString()}행 → {group.reduced_rows.toLocaleString()}행</strong>
+        <strong>{group.files.length}개 파일</strong>
       </div>
-      <p className="result-method">추천 방식 · <b>{group.reduction_method}</b></p>
-      <dl className="score-grid">
-        {scores.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-      </dl>
+      <SummaryCards group={group} />
       <p className="result-files">파일 · {group.files.join(", ")}</p>
     </section>
   );
