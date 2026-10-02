@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, getColumns, updateColumns, type ColumnChoice } from "./api/client";
 
@@ -20,6 +20,7 @@ function useColumnGroup(jobId: string, groupId: string) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
+  const [stratifyColumn, setStratifyColumn] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const saveRequest = useRef<AbortController | null>(null);
 
@@ -29,6 +30,7 @@ function useColumnGroup(jobId: string, groupId: string) {
     getColumns(jobId, groupId, { signal: controller.signal }).then((view) => {
       if (controller.signal.aborted) return;
       setColumns(view.columns);
+      setStratifyColumn(view.stratify_column);
       setBaseline(selectionKey(view.columns));
       setLoadState("ready");
       setSaveState("idle");
@@ -63,6 +65,7 @@ function useColumnGroup(jobId: string, groupId: string) {
       const view = await updateColumns(jobId, groupId, { selected }, { signal: controller.signal });
       if (saveRequest.current !== controller) return;
       setColumns(view.columns);
+      setStratifyColumn(view.stratify_column);
       setBaseline(selectionKey(view.columns));
       setSaveState("saved");
     } catch (error) {
@@ -75,7 +78,7 @@ function useColumnGroup(jobId: string, groupId: string) {
     }
   }
 
-  return { columns, selected, dirty, recommended, loadState, saveState, message, edit, save, retry: () => setReload((value) => value + 1) };
+  return { columns, selected, dirty, recommended, stratifyColumn, loadState, saveState, message, edit, save, retry: () => setReload((value) => value + 1) };
 }
 
 function ColumnRow({ column, inputId, disabled, onChange }: { column: ColumnChoice; inputId: string; disabled: boolean; onChange: () => void }) {
@@ -91,9 +94,11 @@ function ColumnRow({ column, inputId, disabled, onChange }: { column: ColumnChoi
   </li>;
 }
 
-function ColumnGroup({ jobId, groupId }: { jobId: string; groupId: string }) {
+function ColumnGroup({ jobId, groupId, reportReady }: { jobId: string; groupId: string; reportReady: (groupId: string, ready: boolean) => void }) {
   const review = useColumnGroup(jobId, groupId);
   const title = groupId.replace(/^group-/, "그룹 ");
+  const ready = review.loadState === "ready" && !!review.selected.length && !review.dirty && review.saveState !== "saving";
+  useEffect(() => reportReady(groupId, ready), [groupId, ready, reportReady]);
   if (review.loadState === "loading") return <article className="column-panel column-panel--status" role="status">{title} 컬럼을 불러오고 있습니다…</article>;
   if (review.loadState === "error") return <article className="column-panel column-panel--error" role="alert">
     <strong>{title} 컬럼을 불러오지 못했습니다</strong><span>{review.message}</span>
@@ -117,6 +122,14 @@ function ColumnGroup({ jobId, groupId }: { jobId: string; groupId: string }) {
       {review.columns.map((column, index) => <ColumnRow key={column.name} column={column} inputId={`column-${groupId}-${index}`} disabled={busy} onChange={() => toggle(index)} />)}
     </ul>
     {!review.selected.length && <p className="column-warning" role="alert">축소를 실행하려면 컬럼을 1개 이상 선택하세요.</p>}
+    <div className="stratify-note">
+      <strong>층화 기준 컬럼</strong>
+      {review.dirty
+        ? <span>선택을 저장하면 다시 계산됩니다. 현재 저장 기준: <b>{review.stratifyColumn ?? "없음"}</b></span>
+        : review.stratifyColumn
+        ? <span><b>{review.stratifyColumn}</b>의 범주 비율을 유지합니다.</span>
+        : <span>없음 · 선택한 컬럼 중 층화에 적합한 범주형 컬럼이 없습니다.</span>}
+    </div>
     <div className="column-panel__actions">
       <span className={`column-save-message column-save-message--${review.saveState}`} aria-live="polite">
         {review.saveState === "saved" && "선택을 저장했습니다."}
@@ -131,7 +144,17 @@ function ColumnGroup({ jobId, groupId }: { jobId: string; groupId: string }) {
   </article>;
 }
 
-export default function ColumnReview({ jobId, groupIds }: { jobId: string; groupIds: string[] }) {
+export default function ColumnReview({ jobId, groupIds, onReadyChange }: { jobId: string; groupIds: string[]; onReadyChange?: (ready: boolean) => void }) {
+  const readinessKey = `${jobId}:${groupIds.join("|")}`;
+  const [readiness, setReadiness] = useState<{ key: string; groups: Record<string, boolean> }>({ key: readinessKey, groups: {} });
+  const reportReady = useCallback((groupId: string, ready: boolean) => {
+    setReadiness((current) => {
+      const groups = current.key === readinessKey ? current.groups : {};
+      return groups[groupId] === ready ? { key: readinessKey, groups } : { key: readinessKey, groups: { ...groups, [groupId]: ready } };
+    });
+  }, [readinessKey]);
+  const ready = readiness.key === readinessKey && !!groupIds.length && groupIds.every((groupId) => readiness.groups[groupId]);
+  useEffect(() => onReadyChange?.(ready), [onReadyChange, ready]);
   return <section className="column-review" aria-labelledby="column-review-title">
     <div className="column-review__intro">
       <span className="eyebrow">3단계 · 축소 기준 컬럼</span>
@@ -139,7 +162,11 @@ export default function ColumnReview({ jobId, groupIds }: { jobId: string; group
       <p>선택하지 않은 컬럼도 결과 CSV에는 그대로 포함됩니다.</p>
     </div>
     <div className="column-panel-list">
-      {groupIds.map((groupId) => <ColumnGroup key={groupId} jobId={jobId} groupId={groupId} />)}
+      {groupIds.map((groupId) => <ColumnGroup key={groupId} jobId={jobId} groupId={groupId} reportReady={reportReady} />)}
+    </div>
+    <div className={ready ? "run-readiness run-readiness--ready" : "run-readiness run-readiness--blocked"} role="status" aria-live="polite">
+      <strong>{ready ? "실행 준비 완료" : "아직 실행할 수 없습니다"}</strong>
+      <span>{ready ? "모든 그룹의 컬럼 선택이 저장되었습니다." : "각 그룹에서 컬럼을 1개 이상 선택하고 변경사항을 저장하세요."}</span>
     </div>
   </section>;
 }

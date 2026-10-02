@@ -25,7 +25,11 @@ export type GroupDecision = { group_id: string; merge: boolean };
 export type GroupUpdate = { groups: GroupDecision[] };
 
 export type ColumnChoice = ColumnView & { default_selected: boolean };
-export type ColumnChoices = { group_id: string; columns: ColumnChoice[] };
+export type ColumnChoices = {
+  group_id: string;
+  columns: ColumnChoice[];
+  stratify_column: string | null;
+};
 export type ColumnSelectionUpdate = { selected: string[] };
 
 export type ProjectionMethod = "pca" | "umap";

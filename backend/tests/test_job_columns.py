@@ -29,6 +29,7 @@ def test_get_columns_returns_types_defaults_and_reasons(tmp_path, monkeypatch):
     assert columns["value"]["selected"] is True
     assert columns["id"]["default_selected"] is False
     assert columns["id"]["reason"]
+    assert payload["stratify_column"] == "kind"
 
 
 def test_put_columns_persists_selection(tmp_path, monkeypatch):
@@ -42,6 +43,32 @@ def test_put_columns_persists_selection(tmp_path, monkeypatch):
     assert selected == ["kind"]
     repeated = client.get(url)
     assert [c["name"] for c in repeated.json()["columns"] if c["selected"]] == ["kind"]
+    assert repeated.json()["stratify_column"] == "kind"
+
+
+def test_put_columns_updates_stratify_guidance(tmp_path, monkeypatch):
+    job_id = _create_job(tmp_path, monkeypatch)
+    url = f"/jobs/{job_id}/groups/group-1/columns"
+
+    response = client.put(url, json={"selected": ["value"]})
+
+    assert response.status_code == 200
+    assert response.json()["stratify_column"] is None
+
+
+def test_stratify_guidance_matches_post_missing_pipeline_frame(tmp_path, monkeypatch):
+    monkeypatch.setattr(jobs, "JOB_ROOT", tmp_path)
+    body = b"filter,a,b\n1,A,X\n2,A,Y\n3,A,X\n4,B,Y\n,A,X\n,B,X\n,B,X\n,B,X\n"
+    created = client.post("/jobs", files=[("files", ("data.csv", body, "text/csv"))])
+    job_id = created.json()["job_id"]
+
+    response = client.put(
+        f"/jobs/{job_id}/groups/group-1/columns",
+        json={"selected": ["filter", "a", "b"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["stratify_column"] == "b"
 
 
 def test_put_columns_rejects_empty_unknown_and_duplicate(tmp_path, monkeypatch):

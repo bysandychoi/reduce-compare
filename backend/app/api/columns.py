@@ -8,6 +8,8 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from app.api.groups import calculate_groups
+from app.core.prepare import drop_missing_rows, merge_group
+from app.core.sampling import choose_stratify_column
 from app.core.schema import ColumnInfo, SchemaGroup
 
 router = APIRouter(tags=["jobs"])
@@ -26,6 +28,7 @@ class ColumnChoice(BaseModel):
 class ColumnChoices(BaseModel):
     group_id: str
     columns: list[ColumnChoice]
+    stratify_column: str | None
 
 
 class ColumnSelectionUpdate(BaseModel):
@@ -53,7 +56,8 @@ def _selected_names(directory: Path, group_id: str, columns: list[ColumnInfo]) -
 
 
 def _view(directory: Path, group_id: str, group: SchemaGroup) -> ColumnChoices:
-    selected = set(_selected_names(directory, group_id, group.columns))
+    selected_names = _selected_names(directory, group_id, group.columns)
+    selected = set(selected_names)
     choices = [
         ColumnChoice(
             name=column.name,
@@ -66,7 +70,18 @@ def _view(directory: Path, group_id: str, group: SchemaGroup) -> ColumnChoices:
         )
         for column in group.columns
     ]
-    return ColumnChoices(group_id=group_id, columns=choices)
+    try:
+        frame = merge_group(group.files, add_source=False)
+    except (OSError, UnicodeError, ValueError) as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "층화 기준을 계산할 수 없습니다"
+        ) from error
+    prepared, _dropped = drop_missing_rows(frame, selected_names)
+    return ColumnChoices(
+        group_id=group_id,
+        columns=choices,
+        stratify_column=choose_stratify_column(prepared, group.columns, selected_names),
+    )
 
 
 def _validate_selection(selected: list[str], group: SchemaGroup) -> None:
