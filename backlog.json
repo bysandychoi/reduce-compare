@@ -150,7 +150,7 @@
     {"id": "T080", "epic": "E8", "title": "그룹 선택 탭", "description": "여러 그룹 결과를 탭으로 전환", "estimate_min": 15, "depends_on": ["T070", "T071"], "acceptance_criteria": ["탭 전환 시 해당 그룹 결과 표시"], "status": "done"},
     {"id": "T081", "epic": "E8", "title": "요약 카드", "description": "원본 행 수, 축소 행 수, 축소 비율, 추천 방식, 종합 점수 카드", "estimate_min": 20, "depends_on": ["T080"], "acceptance_criteria": ["요약 값이 결과와 일치"], "status": "done"},
     {"id": "T082", "epic": "E8", "title": "세부 지표 표", "description": "분포·상관·구조 지표를 컬럼별/항목별 표로 표시, 정렬 가능", "estimate_min": 30, "depends_on": ["T080"], "acceptance_criteria": ["지표 항목별 정렬 동작"], "status": "done"},
-    {"id": "T083", "epic": "E8", "title": "크기별 점수 곡선 차트", "description": "후보 크기 vs 종합 점수 곡선과 기준선, 선택 지점 표시", "estimate_min": 25, "depends_on": ["T080"], "acceptance_criteria": ["기준선과 선택 크기 강조 표시"], "status": "todo"},
+    {"id": "T083", "epic": "E8", "title": "크기별 점수 곡선 차트", "description": "후보 크기 vs 종합 점수 곡선과 기준선, 선택 지점 표시", "estimate_min": 25, "depends_on": ["T080"], "acceptance_criteria": ["기준선과 선택 크기 강조 표시"], "status": "in_progress"},
     {"id": "T084", "epic": "E8", "title": "방식별 점수 비교", "description": "랜덤/층화/군집 방식 점수 비교 막대", "estimate_min": 15, "depends_on": ["T080"], "acceptance_criteria": ["추천 방식이 강조됨"], "status": "todo"},
     {"id": "T085", "epic": "E8", "title": "축소본 CSV 다운로드", "description": "선택된 축소본 행을 CSV로 다운로드", "estimate_min": 20, "depends_on": ["T064", "T080"], "acceptance_criteria": ["다운로드 파일 행 수 = 축소 행 수"], "status": "todo"},
     {"id": "T090", "epic": "E9", "title": "그래프 컨테이너와 종류 선택", "description": "그래프 종류 선택 드롭다운과 원본/축소본 나란히·겹쳐보기 전환", "estimate_min": 25, "depends_on": ["T080"], "acceptance_criteria": ["종류·보기 모드 전환 동작"], "status": "todo"},
