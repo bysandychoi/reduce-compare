@@ -1,6 +1,7 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 import FolderPicker from "./FolderPicker";
+import { getHealth } from "./api/client";
 
 type ConnectionState =
   | { status: "loading" }
@@ -14,12 +15,6 @@ function currentRoute(): Route {
   return "not-found";
 }
 
-function isHealthResponse(value: unknown): value is { status: "ok"; version: string } {
-  if (typeof value !== "object" || value === null) return false;
-  const health = value as Record<string, unknown>;
-  return health.status === "ok" && typeof health.version === "string";
-}
-
 function useConnection(): ConnectionState {
   const [connection, setConnection] = useState<ConnectionState>({ status: "loading" });
 
@@ -27,10 +22,7 @@ function useConnection(): ConnectionState {
     const controller = new AbortController();
     async function checkBackend() {
       try {
-        const response = await fetch("/api/health", { signal: controller.signal });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const health: unknown = await response.json();
-        if (!isHealthResponse(health)) throw new Error("Invalid health response");
+        const health = await getHealth({ signal: controller.signal });
         setConnection({ status: "connected", version: health.version });
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
