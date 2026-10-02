@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 type ConnectionState =
   | { status: "loading" }
   | { status: "connected"; version: string }
   | { status: "unavailable" };
+type Route = "/" | "/results" | "not-found";
+
+function currentRoute(): Route {
+  const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (pathname === "/" || pathname === "/results") return pathname;
+  return "not-found";
+}
 
 function isHealthResponse(value: unknown): value is { status: "ok"; version: string } {
   if (typeof value !== "object" || value === null) return false;
@@ -11,17 +18,15 @@ function isHealthResponse(value: unknown): value is { status: "ok"; version: str
   return health.status === "ok" && typeof health.version === "string";
 }
 
-export default function App() {
+function useConnection(): ConnectionState {
   const [connection, setConnection] = useState<ConnectionState>({ status: "loading" });
 
   useEffect(() => {
     const controller = new AbortController();
-
     async function checkBackend() {
       try {
         const response = await fetch("/api/health", { signal: controller.signal });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
         const health: unknown = await response.json();
         if (!isHealthResponse(health)) throw new Error("Invalid health response");
         setConnection({ status: "connected", version: health.version });
@@ -31,29 +36,104 @@ export default function App() {
         }
       }
     }
-
     void checkBackend();
     return () => controller.abort();
   }, []);
+  return connection;
+}
 
-  const connectionText =
-    connection.status === "connected"
-      ? `백엔드 연결됨 · API ${connection.version}`
-      : connection.status === "unavailable"
-        ? "백엔드에 연결할 수 없습니다"
-        : "백엔드 연결 확인 중…";
+function AppLink({ children, href, onNavigate, active = false }: {
+  children: ReactNode;
+  href: string;
+  onNavigate: (href: string) => void;
+  active?: boolean;
+}) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (event.currentTarget.target && event.currentTarget.target !== "_self") return;
+    event.preventDefault();
+    onNavigate(href);
+  }
+  return <a href={href} onClick={handleClick} aria-current={active ? "page" : undefined}>{children}</a>;
+}
+
+function UploadPage() {
+  return (
+    <section className="page-card" aria-labelledby="upload-title">
+      <span className="eyebrow">1단계 · 데이터 준비</span>
+      <h2 id="upload-title">분석할 데이터 폴더를 선택하세요</h2>
+      <p className="lead">CSV, TSV, 구분자 텍스트 파일을 읽어 구조를 자동으로 확인합니다.</p>
+      <div className="empty-panel">
+        <span className="empty-panel__icon" aria-hidden="true">+</span>
+        <strong>아직 선택한 폴더가 없습니다</strong>
+        <span>폴더 선택 기능은 다음 작업에서 연결됩니다.</span>
+      </div>
+    </section>
+  );
+}
+
+function ResultsPage() {
+  return (
+    <section className="page-card" aria-labelledby="results-title">
+      <span className="eyebrow">분석 결과</span>
+      <h2 id="results-title">축소 결과를 한눈에 비교합니다</h2>
+      <p className="lead">처리가 완료되면 유사도 점수와 원본·축소본 비교가 이곳에 표시됩니다.</p>
+      <div className="empty-panel empty-panel--results">
+        <span className="empty-panel__icon" aria-hidden="true">○</span>
+        <strong>표시할 결과가 없습니다</strong>
+        <span>먼저 업로드 화면에서 데이터 폴더를 선택하세요.</span>
+      </div>
+    </section>
+  );
+}
+
+export default function App() {
+  const [route, setRoute] = useState<Route>(currentRoute);
+  const connection = useConnection();
+
+  useEffect(() => {
+    const handlePopState = () => setRoute(currentRoute());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function navigate(href: string) {
+    if (window.location.pathname !== href) window.history.pushState({}, "", href);
+    setRoute(currentRoute());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const connectionText = connection.status === "connected"
+    ? `API ${connection.version}`
+    : connection.status === "unavailable" ? "API 연결 안 됨" : "API 확인 중";
 
   return (
-    <main className="shell">
-      <h1>Reduce &amp; Compare</h1>
-      <p className="sub">대규모 표 데이터 축소 · 유사도 확인</p>
-      <p className={`connection connection--${connection.status}`} role="status" aria-live="polite">
-        <span className="connection__dot" aria-hidden="true" />
-        {connectionText}
-      </p>
-      <p className="note">
-        화면은 백로그 순서대로 채웁니다. 다음 단계: 폴더 선택 화면과 처리 흐름을 연결합니다.
-      </p>
-    </main>
+    <div className="app-shell">
+      <header className="app-header">
+        <AppLink href="/" onNavigate={navigate}>
+          <span className="brand">Reduce &amp; Compare</span>
+          <span className="brand-sub">표 데이터 축소 워크스페이스</span>
+        </AppLink>
+        <nav aria-label="주요 화면">
+          <AppLink href="/" onNavigate={navigate} active={route === "/"}>업로드</AppLink>
+          <AppLink href="/results" onNavigate={navigate} active={route === "/results"}>결과</AppLink>
+        </nav>
+        <p className={`connection connection--${connection.status}`} role="status" aria-live="polite">
+          <span className="connection__dot" aria-hidden="true" />{connectionText}
+        </p>
+      </header>
+      <main>
+        {route === "/" && <UploadPage />}
+        {route === "/results" && <ResultsPage />}
+        {route === "not-found" && (
+          <section className="page-card not-found" aria-labelledby="not-found-title">
+            <span className="eyebrow">404</span>
+            <h2 id="not-found-title">요청한 화면을 찾을 수 없습니다</h2>
+            <p className="lead">주소를 확인하거나 업로드 화면에서 다시 시작하세요.</p>
+            <AppLink href="/" onNavigate={navigate}>업로드 화면으로 이동</AppLink>
+          </section>
+        )}
+      </main>
+    </div>
   );
 }
