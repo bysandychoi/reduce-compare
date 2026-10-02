@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, getGroups, updateGroups, type GroupView } from "./api/client";
+import ColumnReview from "./ColumnReview";
 
 type LoadState = "loading" | "ready" | "error";
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -175,6 +176,7 @@ export default function GroupReview({ jobId }: { jobId: string }) {
           </button>
         </div>
       )}
+      {!!review.groups.length && <ColumnReview jobId={jobId} groupIds={review.groups.map((group) => group.group_id)} />}
     </section>
   );
 }
