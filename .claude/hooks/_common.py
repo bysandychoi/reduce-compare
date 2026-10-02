@@ -42,16 +42,33 @@ def rel(path):
 
 
 # ---------- 명령 실행 ----------
+def _decode_best_effort(raw):
+    """UTF-8(우리 도구들)부터 시도하고, 안 되면 OS 로캘(Windows cp949 등 OS 자체 메시지)로 시도한다."""
+    if not raw:
+        return ""
+    candidates = ["utf-8"]
+    if os.name == "nt":
+        candidates.append("mbcs")  # 현재 Windows ANSI 코드페이지 (cp949 등)
+    for enc in candidates:
+        try:
+            return raw.decode(enc)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return raw.decode("utf-8", errors="replace")
+
+
 def run(cmd, cwd=None, timeout=600):
     """(returncode, 출력) 반환. 명령이 없으면 127."""
-    args = shlex.split(cmd) if isinstance(cmd, str) else cmd
+    args = shlex.split(cmd, posix=(os.name != "nt")) if isinstance(cmd, str) else cmd
     exe = shutil.which(args[0])
     if not exe:
         return 127, f"명령을 찾을 수 없습니다: {args[0]}"
     args = [exe, *args[1:]]
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     try:
-        p = subprocess.run(args, cwd=cwd or PROJECT, capture_output=True, text=True, timeout=timeout)
-        return p.returncode, (p.stdout + p.stderr).strip()
+        p = subprocess.run(args, cwd=cwd or PROJECT, capture_output=True, timeout=timeout, env=env)
+        text = _decode_best_effort(p.stdout) + _decode_best_effort(p.stderr)
+        return p.returncode, text.strip()
     except subprocess.TimeoutExpired:
         return 124, f"시간 초과 ({timeout}초): {cmd}"
 
