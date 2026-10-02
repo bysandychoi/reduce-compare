@@ -15,7 +15,7 @@ function uploadMessage(error: unknown) {
   return "업로드 중 예상하지 못한 오류가 발생했습니다";
 }
 
-export default function UploadPage() {
+export default function UploadPage({ onComplete }: { onComplete: (jobId: string) => void }) {
   const [files, setFiles] = useState<UploadItem[]>([]);
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
   const activeRequest = useRef<AbortController | null>(null);
@@ -89,7 +89,7 @@ export default function UploadPage() {
             <span>작업 번호</span>
             <code>{upload.job.job_id}</code>
           </div>
-          <GroupReview jobId={upload.job.job_id} />
+          <GroupReview jobId={upload.job.job_id} onComplete={onComplete} />
         </>
       )}
     </section>

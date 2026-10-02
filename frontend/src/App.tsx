@@ -102,7 +102,7 @@ export default function App() {
         </p>
       </header>
       <main>
-        {route === "/" && <UploadPage />}
+        {route === "/" && <UploadPage onComplete={(jobId) => navigate(`/results?job=${encodeURIComponent(jobId)}`)} />}
         {route === "/results" && <ResultsPage />}
         {route === "not-found" && (
           <section className="page-card not-found" aria-labelledby="not-found-title">

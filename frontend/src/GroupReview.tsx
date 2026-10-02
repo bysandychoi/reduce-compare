@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, getGroups, updateGroups, type GroupView } from "./api/client";
 import ColumnReview from "./ColumnReview";
+import RunPanel from "./RunPanel";
 
 type LoadState = "loading" | "ready" | "error";
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -139,8 +140,9 @@ function LoadResult({ state, message, retry }: { state: LoadState; message: stri
   </div>;
 }
 
-export default function GroupReview({ jobId }: { jobId: string }) {
+export default function GroupReview({ jobId, onComplete }: { jobId: string; onComplete: (jobId: string) => void }) {
   const review = useGroupReview(jobId);
+  const [columnsReady, setColumnsReady] = useState(false);
 
   if (review.loadState !== "ready") {
     return <LoadResult state={review.loadState} message={review.message} retry={review.retry} />;
@@ -176,7 +178,16 @@ export default function GroupReview({ jobId }: { jobId: string }) {
           </button>
         </div>
       )}
-      {!!review.groups.length && <ColumnReview jobId={jobId} groupIds={review.groups.map((group) => group.group_id)} />}
+      {!!review.groups.length && (
+        <>
+          <ColumnReview jobId={jobId} groupIds={review.groups.map((group) => group.group_id)} onReadyChange={setColumnsReady} />
+          <RunPanel
+            jobId={jobId}
+            ready={columnsReady && !review.dirty && review.saveState !== "saving" && review.saveState !== "error"}
+            onComplete={onComplete}
+          />
+        </>
+      )}
     </section>
   );
 }
