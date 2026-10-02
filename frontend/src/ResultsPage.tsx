@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError, getResult, type GroupResult, type PipelineResults } from "./api/client";
 import MetricTable from "./MetricTable";
+import SizeScoreChart from "./SizeScoreChart";
 import SummaryCards from "./SummaryCards";
 
 type ResultState =
@@ -13,7 +14,7 @@ function errorMessage(error: unknown) {
   return error instanceof ApiError ? error.message : "결과를 불러오지 못했습니다";
 }
 
-function GroupSummary({ group }: { group: GroupResult }) {
+function GroupSummary({ group, target }: { group: GroupResult; target: number }) {
   return (
     <section className="result-group" role="tabpanel" id={`panel-${group.name}`} aria-labelledby={`tab-${group.name}`}>
       <div className="result-group__header">
@@ -22,6 +23,7 @@ function GroupSummary({ group }: { group: GroupResult }) {
       </div>
       <SummaryCards group={group} />
       <MetricTable group={group} />
+      <SizeScoreChart group={group} target={target} />
       <p className="result-files">파일 · {group.files.join(", ")}</p>
     </section>
   );
@@ -55,7 +57,7 @@ function ReadyResults({ result }: { result: PipelineResults }) {
         }}
       >{item.name}<span>{item.reduced_rows.toLocaleString()}행</span></button>)}
     </div>
-    <GroupSummary key={group.name} group={group} />
+    <GroupSummary key={group.name} group={group} target={result.target} />
     {!!result.skipped.length && <aside className="result-skipped">
       <strong>처리하지 못한 그룹 {result.skipped.length}개</strong>
       {result.skipped.map((item) => <span key={item.name}>{item.name} · {item.reason}</span>)}

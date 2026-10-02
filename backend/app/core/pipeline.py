@@ -53,6 +53,7 @@ class PipelineResult:
     """폴더 전체 실행 결과와 건너뛴 그룹 사유."""
 
     folder: str
+    target: float = DEFAULT_TARGET
     groups: list[GroupPipelineResult] = field(default_factory=list)
     skipped: list[dict] = field(default_factory=list)
 
@@ -175,7 +176,7 @@ def run_folder_pipeline(folder: str, target: float = DEFAULT_TARGET, seed: int =
     if not files:
         raise ValueError(f"읽을 수 있는 표 파일을 찾지 못했습니다: {folder}")
     groups = group_by_schema([extract_schema(item) for item in files])
-    result = PipelineResult(folder=folder)
+    result = PipelineResult(folder=folder, target=target)
     work: list[tuple[str, str, SchemaGroup]] = []
     for index, group in enumerate(groups):
         group_id = f"group-{index + 1}"

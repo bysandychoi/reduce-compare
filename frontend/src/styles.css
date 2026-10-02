@@ -495,6 +495,25 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .metric-badge { display: inline-flex; min-width: 42px; justify-content: center; padding: 3px 8px; border-radius: 999px; background: #e8f0f8; color: var(--accent); font-size: 11px; font-weight: 800; }
 .metric-badge--상관 { background: #eee8fa; color: #62499b; }
 .metric-badge--구조 { background: #e5f4ed; color: #36765a; }
+.curve-section { margin-top: 26px; }
+.curve-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 12px; }
+.curve-heading > div > span { color: var(--sub); font-size: 12px; }
+.curve-heading h4 { margin: 2px 0 0; font-size: 18px; }
+.curve-legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--sub); font-size: 11px; }
+.curve-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.curve-legend i { width: 13px; height: 3px; background: var(--accent); }
+.curve-legend span:nth-child(2) i { border-top: 2px dashed #c07d2f; background: transparent; }
+.curve-legend span:nth-child(3) i { width: 9px; height: 9px; border-radius: 50%; background: #dd5c45; }
+.curve-chart { display: block; width: 100%; min-width: 520px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.curve-grid { stroke: #e4e9ee; stroke-width: 1; }
+.curve-target { stroke: #c07d2f; stroke-width: 2; stroke-dasharray: 7 6; }
+.curve-line { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.curve-point { fill: white; stroke: var(--accent); stroke-width: 3; }
+.curve-point--selected { fill: #dd5c45; stroke: white; stroke-width: 3; filter: drop-shadow(0 1px 2px #7a322b80); }
+.curve-axis { fill: var(--sub); font-size: 11px; }
+.curve-axis-label { fill: var(--sub); font-size: 10px; }
+.curve-selected-label { fill: #a13b2d; font-size: 12px; font-weight: 800; }
+.curve-empty { padding: 30px; border: 1px dashed var(--line); border-radius: 12px; color: var(--sub); text-align: center; }
 .result-files { margin: 18px 0 0; overflow-wrap: anywhere; }
 .result-skipped { display: flex; flex-direction: column; gap: 5px; margin-top: 18px; padding: 15px; background: #fff6e6; border: 1px solid #ead5aa; border-radius: 12px; color: #72551d; font-size: 13px; }
 .not-found { text-align: center; }
@@ -542,4 +561,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .summary-card--accent { grid-column: 1 / -1; }
   .metric-section__heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .curve-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .curve-section { overflow-x: auto; }
 }

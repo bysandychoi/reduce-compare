@@ -28,6 +28,7 @@ def test_result_returns_completed_pipeline_schema(tmp_path, monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["folder"] == "uploads"
+    assert payload["target"] == 0
     assert payload["groups"][0]["original_rows"] == 80
     assert payload["groups"][0]["size_curve"]
     assert payload["groups"][0]["method_scores"]

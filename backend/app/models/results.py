@@ -55,6 +55,7 @@ class SkippedGroup(BaseModel):
 
 class PipelineResults(BaseModel):
     folder: str
+    target: float = Field(ge=0, le=100)
     groups: list[GroupResult]
     skipped: list[SkippedGroup]
 
@@ -62,7 +63,9 @@ class PipelineResults(BaseModel):
     def from_core(cls, result: Any) -> PipelineResults:
         """T054 내부 결과를 NumPy 값 없는 JSON 안전 모델로 바꾼다."""
         groups = [_group_from_core(group) for group in result.groups]
-        return cls(folder=result.folder, groups=groups, skipped=result.skipped)
+        return cls(
+            folder=result.folder, target=result.target, groups=groups, skipped=result.skipped
+        )
 
 
 def _group_from_core(group: Any) -> GroupResult:

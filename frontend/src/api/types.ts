@@ -86,6 +86,7 @@ export type GroupResult = {
 export type SkippedGroup = { name: string; files: string[]; reason: string };
 export type PipelineResults = {
   folder: string;
+  target: number;
   groups: GroupResult[];
   skipped: SkippedGroup[];
 };
