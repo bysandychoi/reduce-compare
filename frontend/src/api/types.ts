@@ -103,6 +103,7 @@ export type VisualizationOptions = {
   max_points?: number;
   bins?: number;
   seed?: number;
+  projection_method?: ProjectionMethod;
 };
 export type VisualizationData = {
   group: string;
@@ -115,4 +116,5 @@ export type VisualizationData = {
   original_indices: number[];
   original_density: DensityGrid | null;
   reduced_points: number[][];
+  projection_method: ProjectionMethod;
 };

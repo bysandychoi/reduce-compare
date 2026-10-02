@@ -29,7 +29,7 @@ function GroupSummary({ group, target, jobId }: { group: GroupResult; target: nu
       <MetricTable group={group} />
       <SizeScoreChart group={group} target={target} />
       <MethodScoreBars group={group} />
-      <GraphExplorer />
+      <GraphExplorer jobId={jobId} group={group} />
       <p className="result-files">파일 · {group.files.join(", ")}</p>
     </section>
   );

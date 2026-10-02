@@ -553,6 +553,17 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .graph-placeholder > span { color: #8aa6ba; font-size: 42px; line-height: 1; }
 .graph-placeholder strong { margin-top: 5px; color: var(--ink); font-size: 14px; }
 .graph-placeholder small { margin-top: 3px; font-size: 11px; }
+.graph-message { grid-column: 1 / -1; margin: 0; padding: 70px 20px; border: 1px dashed var(--line); border-radius: 12px; background: white; color: var(--sub); text-align: center; }
+.graph-message--error { color: #842d2d; }
+.scatter-panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.scatter-panel > div { display: flex; justify-content: space-between; padding: 12px 15px 0; }
+.scatter-panel > div span { color: var(--sub); font-size: 11px; }
+.scatter-plot { display: block; width: 100%; }
+.scatter-axis { stroke: #cbd4dc; stroke-width: 1; }
+.scatter-point { opacity: .48; }
+.scatter-point--original { fill: #7c8794; }
+.scatter-point--reduced { fill: #176b9b; opacity: .72; }
+.scatter-label { fill: var(--sub); font-size: 10px; }
 .result-files { margin: 18px 0 0; overflow-wrap: anywhere; }
 .result-skipped { display: flex; flex-direction: column; gap: 5px; margin-top: 18px; padding: 15px; background: #fff6e6; border: 1px solid #ead5aa; border-radius: 12px; color: #72551d; font-size: 13px; }
 .not-found { text-align: center; }

@@ -135,6 +135,7 @@ export function getVisualization(jobId: string, view: VisualizationOptions, opti
   if (view.max_points !== undefined) query.set("max_points", String(view.max_points));
   if (view.bins !== undefined) query.set("bins", String(view.bins));
   if (view.seed !== undefined) query.set("seed", String(view.seed));
+  if (view.projection_method !== undefined) query.set("projection_method", view.projection_method);
   return request<VisualizationData>(
     `/jobs/${segment(jobId)}/visualization?${query.toString()}`,
     { signal: options.signal },

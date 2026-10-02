@@ -7,7 +7,9 @@ import numpy as np
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from app.api.groups import job_directory
 from app.api.results import get_result
+from app.core.projection import ProjectionResult, project_comparison
 from app.models.results import GroupResult
 
 router = APIRouter(tags=["jobs"])
@@ -30,6 +32,7 @@ class VisualizationData(BaseModel):
     original_indices: list[int] = Field(default_factory=list)
     original_density: DensityGrid | None = None
     reduced_points: list[list[float]]
+    projection_method: Literal["pca", "umap"]
 
 
 def _group(result, name: str) -> GroupResult:
@@ -73,6 +76,7 @@ def build_visualization(group: GroupResult, mode: Literal["sample", "density"],
         "original_projected": len(projection.original),
         "reduced_rows": group.reduced_rows,
         "reduced_points": reduced,
+        "projection_method": projection.method,
     }
     if mode == "density":
         return VisualizationData(**common, original_density=_density(projection.original, bins))
@@ -90,6 +94,29 @@ def get_visualization(
     max_points: int = Query(default=5000, ge=1, le=10000),
     bins: int = Query(default=50, ge=5, le=100),
     seed: int = 0,
+    projection_method: Literal["pca", "umap"] | None = None,
 ) -> VisualizationData:
     result = get_result(job_id)
-    return build_visualization(_group(result, group), mode, max_points, bins, seed)
+    selected = _group(result, group)
+    if projection_method is not None and projection_method != selected.projection.method:
+        index = next(i for i, item in enumerate(result.groups) if item.name == group)
+        path = job_directory(job_id) / "projection-source" / f"group-{index + 1}.npz"
+        if not path.is_file():
+            raise HTTPException(status.HTTP_409_CONFLICT, "투영 방식 전환 자료가 없습니다")
+        with np.load(path) as source:
+            projected = project_comparison(
+                source["original"], source["reduced"], projection_method, 2, seed,
+            )
+        selected = selected.model_copy(update={"projection": _projection_model(projected)})
+    return build_visualization(selected, mode, max_points, bins, seed)
+
+
+def _projection_model(projected: ProjectionResult):
+    """코어 투영을 기존 결과 모델과 같은 값 객체로 변환한다."""
+    from app.models.results import ProjectionData
+
+    return ProjectionData(
+        method=projected.method, dimensions=projected.dimensions,
+        original=projected.original.tolist(), reduced=projected.reduced.tolist(),
+        original_indices=projected.original_indices.tolist(),
+    )

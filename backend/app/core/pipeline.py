@@ -46,6 +46,7 @@ class GroupPipelineResult:
     size_curve: list[dict]
     method_scores: list[dict]
     projection: ProjectionResult
+    projection_source: tuple[np.ndarray, np.ndarray]
 
 
 @dataclass
@@ -162,7 +163,7 @@ def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TA
     return GroupPipelineResult(
         name=name, files=[item.name for item in group.files], original_rows=len(frame),
         prepared=prepared, chosen=chosen, size_curve=curve, method_scores=methods,
-        projection=projection,
+        projection=projection, projection_source=(prepared.features, reduced_features),
     )
 
 

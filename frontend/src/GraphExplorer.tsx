@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { ApiError, getVisualization, type GroupResult, type ProjectionMethod, type VisualizationData } from "./api/client";
+import ScatterPlot from "./ScatterPlot";
 
 type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "network";
 type ViewMode = "side" | "overlay";
@@ -17,9 +20,26 @@ function GraphPlaceholder({ label }: { label: string }) {
   </div>;
 }
 
-export default function GraphExplorer() {
+function ScatterPanel({ data, source, title }: { data: VisualizationData; source: "original" | "reduced" | "both"; title: string }) {
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} /></div>;
+}
+
+export default function GraphExplorer({ jobId, group }: { jobId: string; group: GroupResult }) {
   const [kind, setKind] = useState<GraphKind>("scatter-2d");
   const [mode, setMode] = useState<ViewMode>("side");
+  const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
+  const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
+  useEffect(() => {
+    if (kind !== "scatter-2d") return;
+    const controller = new AbortController();
+    setVisual({ loading: true });
+    getVisualization(jobId, { group: group.name, mode: "sample", max_points: 1500, projection_method: projection }, { signal: controller.signal })
+      .then((data) => setVisual({ data, loading: false }))
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setVisual({ loading: false, error: error instanceof ApiError ? error.message : "그래프 데이터를 불러오지 못했습니다" });
+      });
+    return () => controller.abort();
+  }, [group.name, jobId, kind, projection]);
   const label = GRAPH_LABELS[kind];
   return <section className="graph-section" aria-labelledby="graph-title">
     <div className="graph-heading">
@@ -28,16 +48,18 @@ export default function GraphExplorer() {
         <label>그래프 종류<select value={kind} onChange={(event) => setKind(event.target.value as GraphKind)}>
           {Object.entries(GRAPH_LABELS).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
         </select></label>
+        {kind === "scatter-2d" && <label>투영 방식<select value={projection} onChange={(event) => setProjection(event.target.value as ProjectionMethod)}><option value="pca">PCA</option><option value="umap">UMAP</option></select></label>}
         <fieldset><legend>보기 방식</legend>
           <button type="button" aria-pressed={mode === "side"} onClick={() => setMode("side")}>나란히</button>
           <button type="button" aria-pressed={mode === "overlay"} onClick={() => setMode("overlay")}>겹쳐보기</button>
         </fieldset>
       </div>
     </div>
-    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite">
-      {mode === "side" ? <>
-        <GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} />
-      </> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />}
+    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={visual.loading}>
+      {kind === "scatter-2d" && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
+      {kind === "scatter-2d" && visual.error && <p className="graph-message graph-message--error">{visual.error}</p>}
+      {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" /><ScatterPanel data={visual.data} source="reduced" title="축소본" /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" />)}
+      {kind !== "scatter-2d" && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
     </div>
   </section>;
 }

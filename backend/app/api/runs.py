@@ -9,6 +9,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, ValidationError
 
@@ -83,6 +84,16 @@ def _save_reduced_frames(directory: Path, groups: list) -> None:
         temporary.replace(reduced_dir / f"group-{index + 1}.csv")
 
 
+def _save_projection_sources(directory: Path, groups: list) -> None:
+    """그래프 방식 전환용 특징 행렬을 성공 그룹 순서로 저장한다."""
+    source_dir = directory / "projection-source"
+    source_dir.mkdir(exist_ok=True)
+    for index, group in enumerate(groups):
+        original, reduced = group.projection_source
+        with (source_dir / f"group-{index + 1}.npz").open("wb") as output:
+            np.savez_compressed(output, original=original, reduced=reduced)
+
+
 def read_run_status(directory: Path, job_id: str) -> RunStatus:
     path = directory / "run.json"
     transient_error = None
@@ -133,6 +144,7 @@ def _execute(job_id: str, directory: Path, options: RunOptions,
         )
         core.folder = "uploads"
         _save_reduced_frames(directory, core.groups)
+        _save_projection_sources(directory, core.groups)
         progress = 90
         stage = "결과 저장"
         _write_json(directory / "run.json", {
