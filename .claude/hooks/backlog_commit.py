@@ -65,7 +65,7 @@ def review_problems(cfg, ids, new):
             out.append(f"- {i}: {tdir}/{i}.review.md 가 없습니다")
             continue
         with open(path, encoding="utf-8") as f:
-            verdicts = re.findall(r"^판정:\s*(.+?)\s*$", f.read(), re.M)
+            verdicts = re.findall(r"^(?:Verdict|판정):\s*(.+?)\s*$", f.read(), re.M)
         if not verdicts or verdicts[-1] != "PASS":
             out.append(f"- {i}: 마지막 판정이 '{verdicts[-1] if verdicts else '없음'}'입니다")
         elif os.path.getmtime(path) < newest:

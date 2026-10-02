@@ -8,6 +8,7 @@
 - 작업 목록: `backlog.json` — **직접 읽거나 수정하지 말고** `python3 backlog.py`로만 다룹니다.
 - 태스크 안내서: `docs/tasks/<ID>.md` (task-briefer가 작성)
 - 태스크 리뷰: `docs/tasks/<ID>.review.md` (adversarial-reviewer가 작성)
+- 대표 화면 예시: `docs/tasks/<ID>.sample.png` — 화면·그래프를 만드는 태스크는 필수입니다 (`task-workflow.md` 참고)
 
 ## 태스크 진행 순서 (요약)
 1. `python3 backlog.py next`로 고르고, 사용자와 합의한 태스크를 `status <ID> in_progress`

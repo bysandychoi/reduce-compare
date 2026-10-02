@@ -253,7 +253,7 @@ Claude Code는 `CLAUDE.md`, Codex CLI는 `AGENTS.md` 규칙대로 진행합니�
 - 웹 앱과 lint·build 훅: `backend/requirements.txt`, `ruff`, Node.js
 - 에이전트 작업: Claude Code 또는 Codex CLI (같은 백로그·안내서·리뷰 문서를 공유하므로 번갈아 써도 됩니다)
 
-훅을 실행하는 파이썬 명령은 도구마다 다릅니다. `.claude/settings.json`은 `python3`, `.codex/hooks.json`은 `python`을 씁니다.
-Windows처럼 `python3`가 없거나 Microsoft Store 스텁으로만 연결된 환경에서는 `.claude/settings.json`과
-`.claude/hooks/config.json` 안의 `python3`를 모두 `python`으로 바꿔 주세요 (`backlog_cli`와 backend build 명령 포함).
-반대로 `python`이 없는 환경에서는 `.codex/hooks.json`과 `hooks/config.json` 안의 `python`을 모두 `python3`로 맞춥니다.
+훅을 실행하는 파이썬 명령은 두 도구 모두 `python`입니다 (`.claude/settings.json`, `.codex/hooks.json`,
+그리고 두 `config.json`의 `backlog_cli`·backend build 명령).
+`python`이 없고 `python3`만 있는 환경에서는 이 네 파일 안의 `python`을 모두 `python3`로 바꿔 주세요.
+명령이 맞지 않으면 훅이 조용히 실패해 가드·자동 커밋이 동작하지 않습니다.

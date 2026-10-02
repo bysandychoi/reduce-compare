@@ -34,7 +34,17 @@ never an automatic `done`.
 
 Record task and dependency status, scope, non-goals, acceptance criteria, relevant requirements, existing/expected files, tests, edge cases, and line limits. Mark unknown facts as unknown. Task Analysis may only write the task context.
 
-For tasks whose deliverable has a visual form (graph, UI, report, exported image), create a representative `docs/tasks/<TASK_ID>.sample.png` and embed it in the guide as `![Sample output](./<TASK_ID>.sample.png)`. Prefer rendering the real project code with small synthetic data so the sample documents the intended output faithfully. Label it as a sample, never as a completed-result screenshot.
+For tasks whose deliverable has a visual form, also produce the visual sample defined below.
+
+## Visual sample
+
+- Scope: any task that creates or changes a graph, screen, report layout, or exported image. Epics E7-E10 and E13 are visual by default. Tasks that only touch backend logic, scripts, or tests do not get one.
+- File: `docs/tasks/<TASK_ID>.sample.png`, embedded at the end of `docs/tasks/<TASK_ID>.md` under its own section as `![<what it shows>](./<TASK_ID>.sample.png)`, followed by one line stating whether it is synthetic or a real run.
+- Prefer rendering the real project code with small synthetic data so the sample documents the intended output faithfully. Never use real user data, and mark `SAMPLE` inside a synthetic image.
+- Any rendering method is acceptable (screen capture, matplotlib, …). If the image contains Korean text, confirm the font really has those glyphs — `scripts/make_metric_figures.py` shows how to find one and fail loudly when none exists.
+- Keep one-off generation scripts out of `scripts/`: run them from a temporary directory and commit only the png.
+- It is a design and verification reference, never evidence of a completed result.
+- Adversarial Review checks that a required sample exists, is embedded in the guide, and matches the change under review.
 
 ## Adversarial Review contract
 

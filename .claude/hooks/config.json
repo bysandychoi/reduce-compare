@@ -1,6 +1,6 @@
 {
   "protected_files": ["backlog.json"],
-  "backlog_cli": "python3 backlog.py",
+  "backlog_cli": "python backlog.py",
   "protected_branches": ["master", "main"],
   "work_branch": "dev",
 
@@ -14,7 +14,8 @@
       { "name": "프론트 컴포넌트",    "glob": "frontend/src/**/*.tsx",   "max_file": 250, "max_function": 80 },
       { "name": "프론트 로직",        "glob": "frontend/src/**/*.ts",    "max_file": 200, "max_function": 50 },
       { "name": "스크립트",           "glob": "scripts/**/*.py",         "max_file": 200, "max_function": 50 },
-      { "name": "훅 스크립트",        "glob": ".claude/hooks/*.py",      "max_file": 260, "max_function": 60 },
+      { "name": "훅 스크립트",        "glob": "hooks/*.py",              "max_file": 260, "max_function": 60 },
+      { "name": "훅 스크립트(claude)", "glob": ".claude/hooks/*.py",     "max_file": 260, "max_function": 60 },
       { "name": "백로그 CLI",         "glob": "backlog.py",              "max_file": 450, "max_function": 60 }
     ]
   },
@@ -26,7 +27,7 @@
 
   "quality_gate": [
     { "name": "backend lint",   "requires": "backend",               "cwd": "backend",  "cmd": "ruff check ." },
-    { "name": "backend build",  "requires": "backend",               "cwd": "backend",  "cmd": "python3 -m compileall -q ." },
+    { "name": "backend build",  "requires": "backend",               "cwd": "backend",  "cmd": "python -m compileall -q ." },
     { "name": "frontend lint",  "requires": "frontend/package.json", "cwd": "frontend", "cmd": "npm run lint --silent" },
     { "name": "frontend build", "requires": "frontend/package.json", "cwd": "frontend", "cmd": "npm run build --silent" }
   ],
@@ -34,13 +35,14 @@
 
   "task_guard": {
     "enabled": true,
-    "exempt": ["docs/tasks/**", ".claude/**", ".vscode/**", "CLAUDE.md", "README.md", ".gitignore", "problem.md"]
+    "exempt": [".agent/**", "backlog.json", "docs/tasks/**", "rules/**", ".claude/**", ".codex/**", ".vscode/**", "hooks/**", "scripts/check_task_status.py", "CLAUDE.md", "AGENTS.md", "README.md", ".gitignore", "problem.md", "backlog.py"]
   },
 
   "review": {
     "required_for_done": true,
     "dir": "docs/tasks",
-    "exempt_epics": ["E0"]
+    "exempt_epics": ["E0"],
+    "verdicts": ["PASS", "NEEDS_FIX", "HUMAN_REVIEW"]
   },
 
   "popup": {

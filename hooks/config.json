@@ -15,6 +15,7 @@
       { "name": "프론트 로직",        "glob": "frontend/src/**/*.ts",    "max_file": 200, "max_function": 50 },
       { "name": "스크립트",           "glob": "scripts/**/*.py",         "max_file": 200, "max_function": 50 },
       { "name": "훅 스크립트",        "glob": "hooks/*.py",              "max_file": 260, "max_function": 60 },
+      { "name": "훅 스크립트(claude)", "glob": ".claude/hooks/*.py",     "max_file": 260, "max_function": 60 },
       { "name": "백로그 CLI",         "glob": "backlog.py",              "max_file": 450, "max_function": 60 }
     ]
   },

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py\"",
             "timeout": 20
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_backlog.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_backlog.py\"",
             "timeout": 10
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/task_guard.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/task_guard.py\"",
             "timeout": 10
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_commit.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_commit.py\"",
             "timeout": 900
           }
         ]
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/code_guard.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/code_guard.py\"",
             "timeout": 150
           }
         ]
@@ -61,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.py\"",
             "timeout": 900
           }
         ]
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/notify.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/notify.py\"",
             "timeout": 10
           }
         ]

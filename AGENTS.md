@@ -7,7 +7,7 @@ Read and follow `rules/agent-workflow.md`; it is the shared source of truth for 
 Codex does not copy Claude's subagent syntax. It performs the same responsibilities as explicit workflow stages:
 
 - **Task Analysis:** follow the shared contract and write only `docs/tasks/<TASK_ID>.md`. Read backlog data only with `python backlog.py`.
-- **Visual sample:** when a task creates or changes a graph, screen, report layout, or other visual output, also create `docs/tasks/<TASK_ID>.sample.png` from representative synthetic data and embed it in the task guide. The sample is a design/verification reference, not production evidence.
+- **Visual sample:** when a task creates or changes a graph, screen, report layout, or other visual output, also create `docs/tasks/<TASK_ID>.sample.png` from representative synthetic data and embed it in the task guide. Follow the "Visual sample" section of the shared workflow for scope, the `SAMPLE` marker, font checks, and where generation scripts may live. The sample is a design/verification reference, not production evidence.
 - **Implementation:** verify the selected task is `in_progress`, implement only the task-context scope, and run tests.
 - **Adversarial Review:** after changing the task to `review`, review without editing implementation and write only `docs/tasks/<TASK_ID>.review.md`.
 - **Completion:** apply the exact PASS / NEEDS_FIX / HUMAN_REVIEW transitions in the shared workflow. Never mark a task done on self-assertion alone.
