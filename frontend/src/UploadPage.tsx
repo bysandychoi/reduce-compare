@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import FolderPicker from "./FolderPicker";
+import GroupReview from "./GroupReview";
 import { ApiError, createJob, type JobCreated, type UploadItem } from "./api/client";
 
 type UploadState =
@@ -81,12 +82,15 @@ export default function UploadPage() {
         </div>
       )}
       {upload.status === "success" && (
-        <div className="upload-status upload-status--success" role="status" aria-live="polite">
-          <strong>업로드가 완료되었습니다</strong>
-          <span>서버에서 {upload.job.files.length}개 파일을 확인했습니다.</span>
-          <span>작업 번호</span>
-          <code>{upload.job.job_id}</code>
-        </div>
+        <>
+          <div className="upload-status upload-status--success" role="status" aria-live="polite">
+            <strong>업로드가 완료되었습니다</strong>
+            <span>서버에서 {upload.job.files.length}개 파일을 확인했습니다.</span>
+            <span>작업 번호</span>
+            <code>{upload.job.job_id}</code>
+          </div>
+          <GroupReview jobId={upload.job.job_id} />
+        </>
       )}
     </section>
   );
