@@ -85,13 +85,16 @@ def _save_reduced_frames(directory: Path, groups: list) -> None:
 
 
 def _save_projection_sources(directory: Path, groups: list) -> None:
-    """그래프 방식 전환용 특징 행렬을 성공 그룹 순서로 저장한다."""
+    """그래프 방식 전환용 특징 행렬과 대표 행 가중치를 성공 그룹 순서로 저장한다."""
     source_dir = directory / "projection-source"
     source_dir.mkdir(exist_ok=True)
     for index, group in enumerate(groups):
         original, reduced = group.projection_source
         with (source_dir / f"group-{index + 1}.npz").open("wb") as output:
-            np.savez_compressed(output, original=original, reduced=reduced)
+            np.savez_compressed(
+                output, original=original, reduced=reduced,
+                weights=group.chosen.reduction.weights,
+            )
 
 
 def read_run_status(directory: Path, job_id: str) -> RunStatus:

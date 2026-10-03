@@ -106,6 +106,23 @@ export type VisualizationOptions = {
   projection_method?: ProjectionMethod;
   projection_dimensions?: 2 | 3;
 };
+export type HistogramOptions = {
+  group: string;
+  column?: string;
+  bins?: number;
+};
+export type HistogramData = {
+  group: string;
+  column: string;
+  columns: string[];
+  edges: number[];
+  original_ratios: number[];
+  reduced_ratios: number[];
+  original_rows: number;
+  reduced_rows: number;
+  weighted: boolean;
+  dropped_values: number;
+};
 export type VisualizationData = {
   group: string;
   mode: VisualizationMode;

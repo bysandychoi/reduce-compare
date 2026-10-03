@@ -5,6 +5,8 @@ import type {
   GroupUpdate,
   GroupsView,
   Health,
+  HistogramData,
+  HistogramOptions,
   JobCreated,
   PipelineResults,
   RunAccepted,
@@ -127,6 +129,16 @@ export function getResult(jobId: string, options: ApiOptions = {}) {
 
 export function resultDownloadUrl(jobId: string, groupName: string) {
   return `${API_BASE}/jobs/${segment(jobId)}/result/${segment(groupName)}/download`;
+}
+
+export function getHistogram(jobId: string, view: HistogramOptions, options: ApiOptions = {}) {
+  const query = new URLSearchParams({ group: view.group });
+  if (view.column !== undefined) query.set("column", view.column);
+  if (view.bins !== undefined) query.set("bins", String(view.bins));
+  return request<HistogramData>(
+    `/jobs/${segment(jobId)}/histogram?${query.toString()}`,
+    { signal: options.signal },
+  );
 }
 
 export function getVisualization(jobId: string, view: VisualizationOptions, options: ApiOptions = {}) {

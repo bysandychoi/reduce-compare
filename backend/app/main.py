@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app import __version__
 from app.api.columns import router as columns_router
+from app.api.distributions import router as distributions_router
 from app.api.groups import router as groups_router
 from app.api.jobs import router as jobs_router
 from app.api.results import router as results_router
@@ -27,6 +28,7 @@ app.include_router(columns_router)
 app.include_router(runs_router)
 app.include_router(results_router)
 app.include_router(visualizations_router)
+app.include_router(distributions_router)
 
 
 class Health(BaseModel):

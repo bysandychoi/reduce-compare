@@ -564,6 +564,10 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .scatter-point--original { fill: #7c8794; }
 .scatter-point--reduced { fill: #176b9b; opacity: .72; }
 .scatter-label { fill: var(--sub); font-size: 10px; }
+.graph-note { margin: 0 0 10px; padding: 9px 13px; border: 1px solid #ead5aa; border-radius: 10px; background: #fff6e6; color: #72551d; font-size: 12px; }
+.histogram { display: block; width: 100%; }
+.histogram-bar--original { fill: #7c8794; opacity: .55; }
+.histogram-bar--reduced { fill: #176b9b; opacity: .62; }
 .scatter-3d { min-width: 0; min-height: 390px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .result-files { margin: 18px 0 0; overflow-wrap: anywhere; }
 .result-skipped { display: flex; flex-direction: column; gap: 5px; margin-top: 18px; padding: 15px; background: #fff6e6; border: 1px solid #ead5aa; border-radius: 12px; color: #72551d; font-size: 13px; }
