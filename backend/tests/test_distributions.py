@@ -99,13 +99,21 @@ def test_histogram_applies_representative_weights(tmp_path, monkeypatch):
 
 
 def test_histogram_rejects_categorical_column(tmp_path, monkeypatch):
+    """있지만 비교할 수 없는 컬럼은 422, 아예 없는 컬럼은 404로 구분한다."""
     job_id = _write_job(tmp_path, monkeypatch)
-    response = client.get(
+    present = client.get(
         f"/jobs/{job_id}/histogram", params={"group": "A", "column": "label"}
     )
 
-    assert response.status_code == 422
-    assert "수치형" in response.json()["detail"]
+    assert present.status_code == 422
+    assert "수치형" in present.json()["detail"]
+
+    absent = client.get(
+        f"/jobs/{job_id}/histogram", params={"group": "A", "column": "없는컬럼"}
+    )
+
+    assert absent.status_code == 404
+    assert "없습니다" in absent.json()["detail"]
 
 
 def test_histogram_reports_unknown_group(tmp_path, monkeypatch):
@@ -142,7 +150,8 @@ def test_histogram_ignores_infinite_values(tmp_path, monkeypatch):
     payload = response.json()
     assert all(value is not None for value in payload["edges"])
     assert payload["edges"][-1] == 49.0
-    assert payload["dropped_values"] == 1
+    assert payload["dropped_original"] == 1
+    assert payload["dropped_reduced"] == 0
     assert payload["original_rows"] == 50
     assert min(payload["original_ratios"]) >= 0
 
@@ -174,6 +183,36 @@ def test_histogram_rejects_range_too_wide_for_bins(tmp_path, monkeypatch):
 
     assert response.status_code == 422
     assert "구간을 만들 수 없습니다" in response.json()["detail"]
+
+
+def test_histogram_counts_reduced_side_drops_separately(tmp_path, monkeypatch):
+    """축소본에만 무한대가 있으면 그 건수는 축소본 쪽으로만 세야 한다."""
+    job_id = _write_job(
+        tmp_path, monkeypatch, reduced_values=[10.0, float("inf"), 90.0],
+        weights=[40.0, 1.0, 60.0],
+    )
+    response = client.get(f"/jobs/{job_id}/histogram", params={"group": "A", "bins": 10})
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["dropped_reduced"] == 1
+    assert payload["dropped_original"] == 0
+    assert payload["reduced_rows"] == 2
+
+
+def test_histogram_hides_pipeline_source_column(tmp_path, monkeypatch):
+    """파이프라인이 붙인 출처 컬럼은 원본에 없던 것이라 404로 알린다."""
+    job_id = _write_job(tmp_path, monkeypatch)
+    reduced = tmp_path / job_id / "reduced" / "group-1.csv"
+    frame = pd.read_csv(reduced, encoding="utf-8-sig")
+    frame["_source_file"] = "source.csv"
+    frame.to_csv(reduced, index=False, encoding="utf-8-sig")
+
+    response = client.get(
+        f"/jobs/{job_id}/histogram", params={"group": "A", "column": "_source_file"}
+    )
+
+    assert response.status_code == 404
 
 
 def test_histogram_reports_missing_weights(tmp_path, monkeypatch):
@@ -219,7 +258,13 @@ def test_histogram_matches_real_pipeline_output(tmp_path, monkeypatch):
     payload = response.json()
     assert payload["weighted"] is True, "실제 실행에서는 대표 행 가중치가 저장돼 있어야 한다"
     assert payload["original_rows"] == 140, "축소 전에 빠진 행이 원본 분포에 다시 들어왔다"
-    assert payload["dropped_values"] >= 20
+    assert payload["dropped_original"] >= 20
     assert payload["reduced_rows"] == result["reduced_rows"]
-    assert set(payload["columns"]) <= set(compared), "비교 대상이 아닌 컬럼은 고를 수 없어야 한다"
+    # 토톨로지를 피해 독립된 기대값으로 확인한다: 일련번호 seq는 축소 기준에서 빠지고,
+    # 기준으로 쓰인 수치형 컬럼은 하나도 빠지지 않아야 한다.
+    assert "seq" not in payload["columns"], "축소 기준이 아닌 컬럼이 선택 목록에 들어갔다"
+    assert set(compared) <= set(payload["columns"]), "기준으로 쓰인 수치형 컬럼이 빠졌다"
+    assert client.get(
+        f"/jobs/{job_id}/histogram", params={"group": result["name"], "column": "seq"}
+    ).status_code == 422
     assert abs(sum(payload["reduced_ratios"]) - 1.0) < 1e-4, "구간별 반올림 오차 범위 안이어야 한다"

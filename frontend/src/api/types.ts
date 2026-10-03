@@ -121,7 +121,8 @@ export type HistogramData = {
   original_rows: number;
   reduced_rows: number;
   weighted: boolean;
-  dropped_values: number;
+  dropped_original: number;
+  dropped_reduced: number;
 };
 export type VisualizationData = {
   group: string;
