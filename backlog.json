@@ -157,7 +157,7 @@
     {"id": "T091", "epic": "E9", "title": "2D 산점도 비교", "description": "PCA/UMAP 투영 결과를 원본(밀도/서브샘플)과 축소본으로 표시", "estimate_min": 30, "depends_on": ["T065", "T090"], "acceptance_criteria": ["투영 방법 전환 가능", "축 범위 동기화"], "status": "done"},
     {"id": "T092", "epic": "E9", "title": "3D 산점도 비교", "description": "3D 투영 좌표 표시, 회전 가능", "estimate_min": 25, "depends_on": ["T091"], "acceptance_criteria": ["원본·축소본 카메라 동기화"], "status": "done"},
     {"id": "T093", "epic": "E9", "title": "히스토그램 비교", "description": "선택 컬럼의 원본·축소본 분포를 정규화 히스토그램으로 겹쳐 표시", "estimate_min": 25, "depends_on": ["T090"], "acceptance_criteria": ["컬럼 선택 시 즉시 갱신"], "status": "done"},
-    {"id": "T094", "epic": "E9", "title": "박스플롯 비교", "description": "수치형 컬럼들의 원본·축소본 박스플롯", "estimate_min": 20, "depends_on": ["T090"], "acceptance_criteria": ["컬럼별 원본·축소본 쌍 표시"], "status": "in_progress"},
+    {"id": "T094", "epic": "E9", "title": "박스플롯 비교", "description": "수치형 컬럼들의 원본·축소본 박스플롯", "estimate_min": 20, "depends_on": ["T090"], "acceptance_criteria": ["컬럼별 원본·축소본 쌍 표시"], "status": "done"},
     {"id": "T095", "epic": "E9", "title": "범주 비율 비교", "description": "범주형 컬럼 비율 막대 비교", "estimate_min": 20, "depends_on": ["T090"], "acceptance_criteria": ["범주별 비율 차이 표시"], "status": "todo"},
     {"id": "T096", "epic": "E9", "title": "상관행렬 히트맵 비교", "description": "원본·축소본·차이 히트맵 3개 표시", "estimate_min": 25, "depends_on": ["T090"], "acceptance_criteria": ["차이 히트맵 색상 범위 대칭"], "status": "todo"},
     {"id": "T097", "epic": "E9", "title": "상관 네트워크 그래프 데이터", "description": "상관 임계값 이상 컬럼 쌍으로 노드·엣지 데이터 생성 (백엔드)", "estimate_min": 20, "depends_on": ["T042"], "acceptance_criteria": ["임계값 파라미터로 엣지 수 조절"], "status": "done"},

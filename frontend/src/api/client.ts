@@ -1,6 +1,8 @@
 import type {
   ApiOptions,
+  BoxplotData,
   ColumnChoices,
+  ColumnGraphOptions,
   ColumnSelectionUpdate,
   GroupUpdate,
   GroupsView,
@@ -129,6 +131,15 @@ export function getResult(jobId: string, options: ApiOptions = {}) {
 
 export function resultDownloadUrl(jobId: string, groupName: string) {
   return `${API_BASE}/jobs/${segment(jobId)}/result/${segment(groupName)}/download`;
+}
+
+export function getBoxplot(jobId: string, view: ColumnGraphOptions, options: ApiOptions = {}) {
+  const query = new URLSearchParams({ group: view.group });
+  if (view.column !== undefined) query.set("column", view.column);
+  return request<BoxplotData>(
+    `/jobs/${segment(jobId)}/boxplot?${query.toString()}`,
+    { signal: options.signal },
+  );
 }
 
 export function getHistogram(jobId: string, view: HistogramOptions, options: ApiOptions = {}) {

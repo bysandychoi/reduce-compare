@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { ApiError, getVisualization, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
+import { ApiError, getBoxplot, getHistogram, getVisualization, type BoxSummary, type BoxplotData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
+import Boxplot from "./Boxplot";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
-import useHistogram from "./useHistogram";
+import useColumnGraph from "./useColumnGraph";
 
 type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "network";
 type ViewMode = "side" | "overlay";
@@ -23,7 +24,29 @@ function GraphPlaceholder({ label }: { label: string }) {
   </div>;
 }
 
-function HistogramNotes({ data }: { data: HistogramData }) {
+type ColumnGraphData = HistogramData | BoxplotData;
+
+// 소수점 자리 수로 자르면 0.004가 "0"이 되어 두 상자가 같아 보인다. 유효숫자로 맞춘다.
+const number = (value: number) => Number.isFinite(value)
+  ? value.toLocaleString(undefined, { maximumSignificantDigits: 6 })
+  : "—";
+
+function boxCaption(box: BoxSummary) {
+  const shown = box.outliers.length < box.outlier_count
+    ? `이상치 ${box.outlier_count.toLocaleString()}개 중 ${box.outliers.length}개 표시`
+    : `이상치 ${box.outlier_count.toLocaleString()}개`;
+  // 사분위수를 글자로 적는다 — 상자가 좁으면 축 눈금으로는 읽을 수 없다.
+  return `${box.rows.toLocaleString()}행 · Q1 ${number(box.q1)} · 중앙값 ${number(box.median)} · Q3 ${number(box.q3)} · ${shown}`;
+}
+
+function BoxplotPanel({ data, source, title }: { data: BoxplotData; source: "original" | "reduced" | "both"; title: string }) {
+  const caption = source === "both"
+    ? `원본 ${boxCaption(data.original)} / 축소본 ${boxCaption(data.reduced)}`
+    : boxCaption(source === "reduced" ? data.reduced : data.original);
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{caption}</span></div><Boxplot data={data} source={source} /></div>;
+}
+
+function ColumnGraphNotes({ data }: { data: ColumnGraphData }) {
   return <>
     {!data.weighted && <p className="graph-note">대표 행 가중치를 쓸 수 없어 모든 대표 행을 같은 비중으로 셌습니다. 지표 표의 분포 점수와 다를 수 있습니다.</p>}
     {data.dropped_original > 0 && <p className="graph-note">원본에서 {data.dropped_original.toLocaleString()}행을 뺐습니다 (축소 대상이 아니었거나 값이 결측·무한대).</p>}
@@ -46,7 +69,9 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
   const [mode, setMode] = useState<ViewMode>("side");
   const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
   const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
-  const histogram = useHistogram(jobId, group.name, kind === "histogram");
+  const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
+  const boxplot = useColumnGraph(getBoxplot, jobId, group.name, kind === "boxplot");
+  const graph = kind === "boxplot" ? boxplot : histogram;
   useEffect(() => {
     if (kind !== "scatter-2d" && kind !== "scatter-3d") return;
     const controller = new AbortController();
@@ -59,8 +84,9 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     return () => controller.abort();
   }, [group.name, jobId, kind, projection]);
   const label = GRAPH_LABELS[kind];
+  const byColumn = kind === "histogram" || kind === "boxplot";
   // shown은 로딩·오류·컬럼 전환 중에는 undefined다 (직전 컬럼 그래프가 남지 않게). 선택 상자는 data를 본다.
-  const shown = histogram.shown;
+  const shown: ColumnGraphData | undefined = graph.shown;
   return <section className="graph-section" aria-labelledby="graph-title">
     <div className="graph-heading">
       <div><span>시각적 비교</span><h4 id="graph-title">원본과 축소본 그래프</h4></div>
@@ -69,8 +95,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
           {Object.entries(GRAPH_LABELS).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
         </select></label>
         {(kind === "scatter-2d" || kind === "scatter-3d") && <label>투영 방식<select value={projection} onChange={(event) => setProjection(event.target.value as ProjectionMethod)}><option value="pca">PCA</option><option value="umap">UMAP</option></select></label>}
-        {kind === "histogram" && histogram.data && <label>컬럼<select value={histogram.column || histogram.data.column} onChange={(event) => histogram.setColumn(event.target.value)}>
-          {histogram.data.columns.map((name) => <option key={name} value={name}>{name}</option>)}
+        {byColumn && graph.data && <label>컬럼<select value={graph.column || graph.data.column} onChange={(event) => graph.setColumn(event.target.value)}>
+          {graph.data.columns.map((name) => <option key={name} value={name}>{name}</option>)}
         </select></label>}
         <fieldset><legend>보기 방식</legend>
           <button type="button" aria-pressed={mode === "side"} onClick={() => setMode("side")}>나란히</button>
@@ -78,18 +104,21 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         </fieldset>
       </div>
     </div>
-    {shown && <HistogramNotes data={shown} />}
-    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={kind === "histogram" ? histogram.loading : visual.loading}>
+    {shown && <ColumnGraphNotes data={shown} />}
+    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : visual.loading}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.error && <p className="graph-message graph-message--error">{visual.error}</p>}
       {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" /><ScatterPanel data={visual.data} source="reduced" title="축소본" /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" />)}
       {kind === "scatter-3d" && visual.data && <ThreeDScatter data={visual.data} mode={mode} />}
-      {kind === "histogram" && histogram.loading && <p className="graph-message">분포를 계산하고 있습니다…</p>}
-      {kind === "histogram" && histogram.error && <p className="graph-message graph-message--error">{histogram.error}</p>}
-      {shown && (mode === "side"
+      {byColumn && graph.loading && <p className="graph-message">{label}을(를) 계산하고 있습니다…</p>}
+      {byColumn && graph.error && <p className="graph-message graph-message--error">{graph.error}</p>}
+      {shown && "edges" in shown && (mode === "side"
         ? <><HistogramPanel data={shown} source="original" title="원본" /><HistogramPanel data={shown} source="reduced" title="축소본" /></>
         : <HistogramPanel data={shown} source="both" title="원본 + 축소본" />)}
-      {kind !== "scatter-2d" && kind !== "scatter-3d" && kind !== "histogram" && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
+      {shown && !("edges" in shown) && (mode === "side"
+        ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
+        : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
+      {kind !== "scatter-2d" && kind !== "scatter-3d" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
     </div>
   </section>;
 }

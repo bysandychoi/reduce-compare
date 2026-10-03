@@ -106,9 +106,11 @@ export type VisualizationOptions = {
   projection_method?: ProjectionMethod;
   projection_dimensions?: 2 | 3;
 };
-export type HistogramOptions = {
+export type ColumnGraphOptions = {
   group: string;
   column?: string;
+};
+export type HistogramOptions = ColumnGraphOptions & {
   bins?: number;
 };
 export type HistogramData = {
@@ -120,6 +122,28 @@ export type HistogramData = {
   reduced_ratios: number[];
   original_rows: number;
   reduced_rows: number;
+  weighted: boolean;
+  dropped_original: number;
+  dropped_reduced: number;
+};
+export type BoxSummary = {
+  minimum: number;
+  q1: number;
+  median: number;
+  q3: number;
+  maximum: number;
+  low_whisker: number;
+  high_whisker: number;
+  outliers: number[];
+  outlier_count: number;
+  rows: number;
+};
+export type BoxplotData = {
+  group: string;
+  column: string;
+  columns: string[];
+  original: BoxSummary;
+  reduced: BoxSummary;
   weighted: boolean;
   dropped_original: number;
   dropped_reduced: number;
