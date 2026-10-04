@@ -566,6 +566,13 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .scatter-label { fill: var(--sub); font-size: 10px; }
 .graph-note { margin: 0 0 10px; padding: 9px 13px; border: 1px solid #ead5aa; border-radius: 10px; background: #fff6e6; color: #72551d; font-size: 12px; }
 .histogram, .boxplot { display: block; width: 100%; }
+.category-ratio { display: block; width: 100%; min-height: 180px; }
+.category-grid { stroke: #e2e7eb; stroke-width: 1; }
+.category-label, .category-value { fill: var(--ink); font-size: 10px; }
+.category-value { fill: var(--sub); font-size: 9px; }
+.category-legend text { fill: var(--sub); font-size: 9px; font-weight: 700; }
+.category-bar--original { fill: #7c8794; opacity: .72; }
+.category-bar--reduced { fill: #176b9b; opacity: .76; }
 .box-whisker { stroke: #9aa5b1; stroke-width: 1; }
 .box-body { fill: #7c8794; fill-opacity: .4; stroke: #7c8794; }
 .box-median { stroke: #33383d; stroke-width: 2; }

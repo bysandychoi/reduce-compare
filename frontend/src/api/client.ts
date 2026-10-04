@@ -1,6 +1,7 @@
 import type {
   ApiOptions,
   BoxplotData,
+  CategoryRatioData,
   ColumnChoices,
   ColumnGraphOptions,
   ColumnSelectionUpdate,
@@ -148,6 +149,15 @@ export function getHistogram(jobId: string, view: HistogramOptions, options: Api
   if (view.bins !== undefined) query.set("bins", String(view.bins));
   return request<HistogramData>(
     `/jobs/${segment(jobId)}/histogram?${query.toString()}`,
+    { signal: options.signal },
+  );
+}
+
+export function getCategoryRatios(jobId: string, view: ColumnGraphOptions, options: ApiOptions = {}) {
+  const query = new URLSearchParams({ group: view.group });
+  if (view.column !== undefined) query.set("column", view.column);
+  return request<CategoryRatioData>(
+    `/jobs/${segment(jobId)}/category-ratios?${query.toString()}`,
     { signal: options.signal },
   );
 }

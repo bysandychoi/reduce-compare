@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { ApiError, getBoxplot, getHistogram, getVisualization, type BoxSummary, type BoxplotData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
+import { ApiError, getBoxplot, getCategoryRatios, getHistogram, getVisualization, type BoxSummary, type BoxplotData, type CategoryRatioData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
 import Boxplot from "./Boxplot";
+import CategoryRatio from "./CategoryRatio";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
 
-type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "network";
+type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "category-ratio" | "network";
 type ViewMode = "side" | "overlay";
 
 const GRAPH_LABELS: Record<GraphKind, string> = {
@@ -15,6 +16,7 @@ const GRAPH_LABELS: Record<GraphKind, string> = {
   "scatter-3d": "3D 산점도",
   histogram: "히스토그램",
   boxplot: "박스플롯",
+  "category-ratio": "범주 비율",
   network: "상관 네트워크",
 };
 
@@ -24,7 +26,7 @@ function GraphPlaceholder({ label }: { label: string }) {
   </div>;
 }
 
-type ColumnGraphData = HistogramData | BoxplotData;
+type ColumnGraphData = HistogramData | BoxplotData | CategoryRatioData;
 
 // 소수부 6자리를 항상 남긴다 (정수부 자릿수 + 6을 유효숫자로 준다).
 // 소수점 자리로 자르면 위도 세 칸이 37.56/37.57/37.57로 뭉개지고,
@@ -66,6 +68,12 @@ function HistogramPanel({ data, source, title }: { data: HistogramData; source: 
   return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><Histogram data={data} source={source} /></div>;
 }
 
+function CategoryPanel({ data, source, title }: { data: CategoryRatioData; source: "original" | "reduced" | "both"; title: string }) {
+  const rows = source === "reduced" ? data.reduced_rows
+    : source === "original" ? data.original_rows : data.original_rows + data.reduced_rows;
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><CategoryRatio data={data} source={source} /></div>;
+}
+
 function ScatterPanel({ data, source, title }: { data: VisualizationData; source: "original" | "reduced" | "both"; title: string }) {
   return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} /></div>;
 }
@@ -77,7 +85,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
   const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
   const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
   const boxplot = useColumnGraph(getBoxplot, jobId, group.name, kind === "boxplot");
-  const graph = kind === "boxplot" ? boxplot : histogram;
+  const category = useColumnGraph(getCategoryRatios, jobId, group.name, kind === "category-ratio");
+  const graph = kind === "boxplot" ? boxplot : kind === "category-ratio" ? category : histogram;
   useEffect(() => {
     if (kind !== "scatter-2d" && kind !== "scatter-3d") return;
     const controller = new AbortController();
@@ -90,7 +99,7 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     return () => controller.abort();
   }, [group.name, jobId, kind, projection]);
   const label = GRAPH_LABELS[kind];
-  const byColumn = kind === "histogram" || kind === "boxplot";
+  const byColumn = kind === "histogram" || kind === "boxplot" || kind === "category-ratio";
   // shown은 로딩·오류·컬럼 전환 중에는 undefined다 (직전 컬럼 그래프가 남지 않게). 선택 상자는 data를 본다.
   const shown: ColumnGraphData | undefined = graph.shown;
   return <section className="graph-section" aria-labelledby="graph-title">
@@ -121,7 +130,10 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
       {shown && "edges" in shown && (mode === "side"
         ? <><HistogramPanel data={shown} source="original" title="원본" /><HistogramPanel data={shown} source="reduced" title="축소본" /></>
         : <HistogramPanel data={shown} source="both" title="원본 + 축소본" />)}
-      {shown && !("edges" in shown) && (mode === "side"
+      {shown && "categories" in shown && (mode === "side"
+        ? <><CategoryPanel data={shown} source="original" title="원본" /><CategoryPanel data={shown} source="reduced" title="축소본" /></>
+        : <CategoryPanel data={shown} source="both" title="원본 + 축소본" />)}
+      {shown && !("edges" in shown) && !("categories" in shown) && (mode === "side"
         ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
         : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
       {kind !== "scatter-2d" && kind !== "scatter-3d" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}

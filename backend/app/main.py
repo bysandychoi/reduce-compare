@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app import __version__
 from app.api.boxplots import router as boxplots_router
+from app.api.category_ratios import router as category_ratios_router
 from app.api.columns import router as columns_router
 from app.api.distributions import router as distributions_router
 from app.api.groups import router as groups_router
@@ -31,6 +32,7 @@ app.include_router(results_router)
 app.include_router(visualizations_router)
 app.include_router(distributions_router)
 app.include_router(boxplots_router)
+app.include_router(category_ratios_router)
 
 
 class Health(BaseModel):

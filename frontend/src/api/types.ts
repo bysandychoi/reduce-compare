@@ -148,6 +148,19 @@ export type BoxplotData = {
   dropped_original: number;
   dropped_reduced: number;
 };
+export type CategoryRatioData = {
+  group: string;
+  column: string;
+  columns: string[];
+  categories: string[];
+  original_ratios: number[];
+  reduced_ratios: number[];
+  original_rows: number;
+  reduced_rows: number;
+  weighted: boolean;
+  dropped_original: number;
+  dropped_reduced: number;
+};
 export type VisualizationData = {
   group: string;
   mode: VisualizationMode;
