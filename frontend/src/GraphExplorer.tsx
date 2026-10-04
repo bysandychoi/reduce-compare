@@ -5,11 +5,12 @@ import Boxplot from "./Boxplot";
 import CategoryRatio from "./CategoryRatio";
 import CorrelationHeatmaps from "./CorrelationHeatmaps";
 import CorrelationNetworks from "./CorrelationNetworks";
+import GraphSettingsPanel from "./GraphSettingsPanel";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
-import type { GraphKind } from "./graphSettings";
+import { defaultGraphSettings, type GraphKind, type GraphSettingValue } from "./graphSettings";
 
 type ViewMode = "side" | "overlay";
 
@@ -84,6 +85,7 @@ function ScatterPanel({ data, source, title }: { data: VisualizationData; source
 export default function GraphExplorer({ jobId, group }: { jobId: string; group: GroupResult }) {
   const [kind, setKind] = useState<GraphKind>("scatter-2d");
   const [mode, setMode] = useState<ViewMode>("side");
+  const [settings, setSettings] = useState(defaultGraphSettings);
   const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
   const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
   const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
@@ -122,6 +124,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         </fieldset>}
       </div>
     </div>
+    <GraphSettingsPanel graph={kind} settings={settings}
+      onChange={(key: string, value: GraphSettingValue) => setSettings((current) => ({ ...current, [key]: value }))} />
     {shown && <ColumnGraphNotes data={shown} />}
     <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : kind === "scatter-2d" || kind === "scatter-3d" ? visual.loading : undefined}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
