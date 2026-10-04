@@ -1,0 +1,1179 @@
+{
+  "metrics": {
+    "score": 89.7,
+    "columns": [
+      "방문",
+      "구매",
+      "광고",
+      "가격",
+      "재고",
+      "리뷰"
+    ],
+    "method": "pearson",
+    "frobenius": 0.4927,
+    "mean_gap": 0.0781,
+    "max_gap": 0.1398,
+    "corr_of_corr": 0.9792,
+    "matrix_original": [
+      [
+        1.0,
+        0.8529,
+        -0.0015,
+        -0.6603,
+        0.0112,
+        0.5595
+      ],
+      [
+        0.8529,
+        1.0,
+        -0.0026,
+        -0.5649,
+        0.0254,
+        0.5096
+      ],
+      [
+        -0.0015,
+        -0.0026,
+        1.0,
+        -0.0317,
+        0.0435,
+        0.3876
+      ],
+      [
+        -0.6603,
+        -0.5649,
+        -0.0317,
+        1.0,
+        -0.0403,
+        -0.3957
+      ],
+      [
+        0.0112,
+        0.0254,
+        0.0435,
+        -0.0403,
+        1.0,
+        0.0278
+      ],
+      [
+        0.5595,
+        0.5096,
+        0.3876,
+        -0.3957,
+        0.0278,
+        1.0
+      ]
+    ],
+    "matrix_reduced": [
+      [
+        1.0,
+        0.7446,
+        0.0155,
+        -0.5205,
+        0.1362,
+        0.5081
+      ],
+      [
+        0.7446,
+        1.0,
+        0.0231,
+        -0.4628,
+        0.1358,
+        0.4242
+      ],
+      [
+        0.0155,
+        0.0231,
+        1.0,
+        -0.1613,
+        0.0081,
+        0.5231
+      ],
+      [
+        -0.5205,
+        -0.4628,
+        -0.1613,
+        1.0,
+        -0.0271,
+        -0.3433
+      ],
+      [
+        0.1362,
+        0.1358,
+        0.0081,
+        -0.0271,
+        1.0,
+        0.0687
+      ],
+      [
+        0.5081,
+        0.4242,
+        0.5231,
+        -0.3433,
+        0.0687,
+        1.0
+      ]
+    ],
+    "undefined_original": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    ],
+    "undefined_reduced": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    ]
+  },
+  "ranked": {
+    "method": "pearson",
+    "pairs": [
+      {
+        "column_a": "방문",
+        "column_b": "가격",
+        "original_r": -0.6603,
+        "reduced_r": -0.5205,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1398,
+        "abs_difference": 0.1398
+      },
+      {
+        "column_a": "광고",
+        "column_b": "리뷰",
+        "original_r": 0.3876,
+        "reduced_r": 0.5231,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1355,
+        "abs_difference": 0.1355
+      },
+      {
+        "column_a": "광고",
+        "column_b": "가격",
+        "original_r": -0.0317,
+        "reduced_r": -0.1613,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.1296,
+        "abs_difference": 0.1296
+      },
+      {
+        "column_a": "방문",
+        "column_b": "재고",
+        "original_r": 0.0112,
+        "reduced_r": 0.1362,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.125,
+        "abs_difference": 0.125
+      },
+      {
+        "column_a": "구매",
+        "column_b": "재고",
+        "original_r": 0.0254,
+        "reduced_r": 0.1358,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1104,
+        "abs_difference": 0.1104
+      },
+      {
+        "column_a": "방문",
+        "column_b": "구매",
+        "original_r": 0.8529,
+        "reduced_r": 0.7446,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.1083,
+        "abs_difference": 0.1083
+      },
+      {
+        "column_a": "구매",
+        "column_b": "가격",
+        "original_r": -0.5649,
+        "reduced_r": -0.4628,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1021,
+        "abs_difference": 0.1021
+      },
+      {
+        "column_a": "구매",
+        "column_b": "리뷰",
+        "original_r": 0.5096,
+        "reduced_r": 0.4242,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0854,
+        "abs_difference": 0.0854
+      },
+      {
+        "column_a": "가격",
+        "column_b": "리뷰",
+        "original_r": -0.3957,
+        "reduced_r": -0.3433,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0524,
+        "abs_difference": 0.0524
+      },
+      {
+        "column_a": "방문",
+        "column_b": "리뷰",
+        "original_r": 0.5595,
+        "reduced_r": 0.5081,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0514,
+        "abs_difference": 0.0514
+      },
+      {
+        "column_a": "재고",
+        "column_b": "리뷰",
+        "original_r": 0.0278,
+        "reduced_r": 0.0687,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0409,
+        "abs_difference": 0.0409
+      },
+      {
+        "column_a": "광고",
+        "column_b": "재고",
+        "original_r": 0.0435,
+        "reduced_r": 0.0081,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0354,
+        "abs_difference": 0.0354
+      },
+      {
+        "column_a": "구매",
+        "column_b": "광고",
+        "original_r": -0.0026,
+        "reduced_r": 0.0231,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0257,
+        "abs_difference": 0.0257
+      },
+      {
+        "column_a": "방문",
+        "column_b": "광고",
+        "original_r": -0.0015,
+        "reduced_r": 0.0155,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.017,
+        "abs_difference": 0.017
+      },
+      {
+        "column_a": "가격",
+        "column_b": "재고",
+        "original_r": -0.0403,
+        "reduced_r": -0.0271,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0132,
+        "abs_difference": 0.0132
+      }
+    ]
+  },
+  "classified": {
+    "method": "pearson",
+    "threshold": 0.5,
+    "pairs": [
+      {
+        "column_a": "방문",
+        "column_b": "가격",
+        "original_r": -0.6603,
+        "reduced_r": -0.5205,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1398,
+        "abs_difference": 0.1398,
+        "status": "maintained",
+        "original_present": true,
+        "reduced_present": true,
+        "sign_changed": false
+      },
+      {
+        "column_a": "광고",
+        "column_b": "리뷰",
+        "original_r": 0.3876,
+        "reduced_r": 0.5231,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1355,
+        "abs_difference": 0.1355,
+        "status": "new",
+        "original_present": false,
+        "reduced_present": true,
+        "sign_changed": false
+      },
+      {
+        "column_a": "광고",
+        "column_b": "가격",
+        "original_r": -0.0317,
+        "reduced_r": -0.1613,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.1296,
+        "abs_difference": 0.1296,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "방문",
+        "column_b": "재고",
+        "original_r": 0.0112,
+        "reduced_r": 0.1362,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.125,
+        "abs_difference": 0.125,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "구매",
+        "column_b": "재고",
+        "original_r": 0.0254,
+        "reduced_r": 0.1358,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1104,
+        "abs_difference": 0.1104,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "방문",
+        "column_b": "구매",
+        "original_r": 0.8529,
+        "reduced_r": 0.7446,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.1083,
+        "abs_difference": 0.1083,
+        "status": "maintained",
+        "original_present": true,
+        "reduced_present": true,
+        "sign_changed": false
+      },
+      {
+        "column_a": "구매",
+        "column_b": "가격",
+        "original_r": -0.5649,
+        "reduced_r": -0.4628,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.1021,
+        "abs_difference": 0.1021,
+        "status": "lost",
+        "original_present": true,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "구매",
+        "column_b": "리뷰",
+        "original_r": 0.5096,
+        "reduced_r": 0.4242,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0854,
+        "abs_difference": 0.0854,
+        "status": "lost",
+        "original_present": true,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "가격",
+        "column_b": "리뷰",
+        "original_r": -0.3957,
+        "reduced_r": -0.3433,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0524,
+        "abs_difference": 0.0524,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "방문",
+        "column_b": "리뷰",
+        "original_r": 0.5595,
+        "reduced_r": 0.5081,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0514,
+        "abs_difference": 0.0514,
+        "status": "maintained",
+        "original_present": true,
+        "reduced_present": true,
+        "sign_changed": false
+      },
+      {
+        "column_a": "재고",
+        "column_b": "리뷰",
+        "original_r": 0.0278,
+        "reduced_r": 0.0687,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0409,
+        "abs_difference": 0.0409,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "광고",
+        "column_b": "재고",
+        "original_r": 0.0435,
+        "reduced_r": 0.0081,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": -0.0354,
+        "abs_difference": 0.0354,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "구매",
+        "column_b": "광고",
+        "original_r": -0.0026,
+        "reduced_r": 0.0231,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0257,
+        "abs_difference": 0.0257,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "방문",
+        "column_b": "광고",
+        "original_r": -0.0015,
+        "reduced_r": 0.0155,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.017,
+        "abs_difference": 0.017,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      },
+      {
+        "column_a": "가격",
+        "column_b": "재고",
+        "original_r": -0.0403,
+        "reduced_r": -0.0271,
+        "original_undefined": false,
+        "reduced_undefined": false,
+        "undefined": false,
+        "difference": 0.0132,
+        "abs_difference": 0.0132,
+        "status": "absent",
+        "original_present": false,
+        "reduced_present": false,
+        "sign_changed": false
+      }
+    ],
+    "counts": {
+      "maintained": 3,
+      "lost": 2,
+      "new": 1,
+      "absent": 9,
+      "undefined": 0
+    }
+  },
+  "networks": {
+    "original": {
+      "nodes": [
+        {
+          "id": "방문",
+          "label": "방문"
+        },
+        {
+          "id": "구매",
+          "label": "구매"
+        },
+        {
+          "id": "광고",
+          "label": "광고"
+        },
+        {
+          "id": "가격",
+          "label": "가격"
+        },
+        {
+          "id": "재고",
+          "label": "재고"
+        },
+        {
+          "id": "리뷰",
+          "label": "리뷰"
+        }
+      ],
+      "edges": [
+        {
+          "source": "방문",
+          "target": "구매",
+          "correlation": 0.8529,
+          "weight": 0.8529,
+          "sign": "positive"
+        },
+        {
+          "source": "방문",
+          "target": "가격",
+          "correlation": -0.6603,
+          "weight": 0.6603,
+          "sign": "negative"
+        },
+        {
+          "source": "방문",
+          "target": "리뷰",
+          "correlation": 0.5595,
+          "weight": 0.5595,
+          "sign": "positive"
+        },
+        {
+          "source": "구매",
+          "target": "가격",
+          "correlation": -0.5649,
+          "weight": 0.5649,
+          "sign": "negative"
+        },
+        {
+          "source": "구매",
+          "target": "리뷰",
+          "correlation": 0.5096,
+          "weight": 0.5096,
+          "sign": "positive"
+        }
+      ],
+      "threshold": 0.5
+    },
+    "reduced": {
+      "nodes": [
+        {
+          "id": "방문",
+          "label": "방문"
+        },
+        {
+          "id": "구매",
+          "label": "구매"
+        },
+        {
+          "id": "광고",
+          "label": "광고"
+        },
+        {
+          "id": "가격",
+          "label": "가격"
+        },
+        {
+          "id": "재고",
+          "label": "재고"
+        },
+        {
+          "id": "리뷰",
+          "label": "리뷰"
+        }
+      ],
+      "edges": [
+        {
+          "source": "방문",
+          "target": "구매",
+          "correlation": 0.7446,
+          "weight": 0.7446,
+          "sign": "positive"
+        },
+        {
+          "source": "방문",
+          "target": "가격",
+          "correlation": -0.5205,
+          "weight": 0.5205,
+          "sign": "negative"
+        },
+        {
+          "source": "방문",
+          "target": "리뷰",
+          "correlation": 0.5081,
+          "weight": 0.5081,
+          "sign": "positive"
+        },
+        {
+          "source": "광고",
+          "target": "리뷰",
+          "correlation": 0.5231,
+          "weight": 0.5231,
+          "sign": "positive"
+        }
+      ],
+      "threshold": 0.5
+    }
+  },
+  "scatter": {
+    "original": [
+      [
+        323.5,
+        25.0
+      ],
+      [
+        785.5,
+        105.7
+      ],
+      [
+        83.5,
+        55.2
+      ],
+      [
+        461.7,
+        53.4
+      ],
+      [
+        387.2,
+        58.7
+      ],
+      [
+        572.2,
+        49.5
+      ],
+      [
+        546.5,
+        56.2
+      ],
+      [
+        428.3,
+        45.7
+      ],
+      [
+        781.2,
+        107.6
+      ],
+      [
+        191.5,
+        78.5
+      ],
+      [
+        747.8,
+        120.5
+      ],
+      [
+        572.4,
+        97.1
+      ],
+      [
+        749.1,
+        103.1
+      ],
+      [
+        521.5,
+        73.8
+      ],
+      [
+        832.0,
+        89.8
+      ],
+      [
+        462.4,
+        66.1
+      ],
+      [
+        877.1,
+        78.2
+      ],
+      [
+        432.2,
+        79.1
+      ],
+      [
+        372.4,
+        78.7
+      ],
+      [
+        998.0,
+        93.1
+      ],
+      [
+        1093.6,
+        79.5
+      ],
+      [
+        388.8,
+        73.6
+      ],
+      [
+        717.0,
+        89.6
+      ],
+      [
+        187.5,
+        82.3
+      ],
+      [
+        678.5,
+        74.7
+      ],
+      [
+        191.9,
+        52.5
+      ],
+      [
+        668.3,
+        76.8
+      ],
+      [
+        1105.0,
+        130.0
+      ],
+      [
+        953.6,
+        101.6
+      ],
+      [
+        570.0,
+        63.4
+      ],
+      [
+        449.0,
+        60.8
+      ],
+      [
+        497.1,
+        41.2
+      ],
+      [
+        387.9,
+        64.8
+      ],
+      [
+        630.2,
+        75.1
+      ],
+      [
+        427.3,
+        47.6
+      ],
+      [
+        244.3,
+        60.4
+      ],
+      [
+        614.8,
+        83.4
+      ],
+      [
+        731.2,
+        59.5
+      ],
+      [
+        190.3,
+        58.4
+      ],
+      [
+        1088.0,
+        100.2
+      ],
+      [
+        630.2,
+        87.1
+      ],
+      [
+        892.4,
+        80.8
+      ],
+      [
+        610.3,
+        91.6
+      ],
+      [
+        577.5,
+        72.6
+      ],
+      [
+        233.8,
+        36.8
+      ],
+      [
+        463.8,
+        86.9
+      ],
+      [
+        690.6,
+        76.8
+      ],
+      [
+        35.0,
+        32.6
+      ],
+      [
+        856.6,
+        85.9
+      ],
+      [
+        604.5,
+        82.2
+      ],
+      [
+        804.8,
+        115.7
+      ],
+      [
+        696.0,
+        64.9
+      ],
+      [
+        388.9,
+        46.2
+      ],
+      [
+        645.7,
+        111.4
+      ],
+      [
+        476.4,
+        75.7
+      ],
+      [
+        368.0,
+        41.6
+      ],
+      [
+        456.6,
+        53.9
+      ],
+      [
+        470.3,
+        63.0
+      ],
+      [
+        592.8,
+        57.9
+      ],
+      [
+        792.8,
+        83.3
+      ],
+      [
+        702.8,
+        70.2
+      ],
+      [
+        567.4,
+        57.1
+      ],
+      [
+        718.6,
+        114.8
+      ],
+      [
+        493.3,
+        96.9
+      ],
+      [
+        906.0,
+        75.4
+      ],
+      [
+        358.9,
+        75.9
+      ],
+      [
+        102.4,
+        60.3
+      ],
+      [
+        482.5,
+        85.6
+      ],
+      [
+        489.2,
+        68.5
+      ],
+      [
+        386.4,
+        55.8
+      ]
+    ],
+    "reduced": [
+      [
+        570.0,
+        63.4
+      ],
+      [
+        913.6,
+        104.1
+      ],
+      [
+        696.4,
+        65.2
+      ],
+      [
+        366.5,
+        77.5
+      ],
+      [
+        825.0,
+        85.0
+      ],
+      [
+        762.6,
+        95.8
+      ],
+      [
+        470.3,
+        63.0
+      ],
+      [
+        732.5,
+        103.5
+      ],
+      [
+        385.2,
+        42.3
+      ],
+      [
+        643.3,
+        90.1
+      ],
+      [
+        761.0,
+        78.4
+      ],
+      [
+        449.0,
+        60.8
+      ],
+      [
+        781.2,
+        107.6
+      ],
+      [
+        966.8,
+        101.6
+      ],
+      [
+        578.8,
+        98.8
+      ],
+      [
+        410.2,
+        106.1
+      ],
+      [
+        977.4,
+        82.1
+      ],
+      [
+        747.7,
+        75.2
+      ],
+      [
+        845.1,
+        85.3
+      ],
+      [
+        762.5,
+        112.9
+      ],
+      [
+        558.3,
+        58.8
+      ],
+      [
+        792.8,
+        116.2
+      ],
+      [
+        729.7,
+        78.7
+      ],
+      [
+        817.0,
+        69.2
+      ],
+      [
+        549.5,
+        77.0
+      ],
+      [
+        613.3,
+        62.4
+      ],
+      [
+        571.0,
+        96.9
+      ],
+      [
+        790.2,
+        107.0
+      ],
+      [
+        544.4,
+        78.7
+      ],
+      [
+        815.0,
+        127.2
+      ],
+      [
+        506.6,
+        41.4
+      ],
+      [
+        238.7,
+        54.4
+      ],
+      [
+        430.8,
+        61.5
+      ],
+      [
+        432.2,
+        79.1
+      ],
+      [
+        447.0,
+        65.1
+      ]
+    ]
+  }
+}
