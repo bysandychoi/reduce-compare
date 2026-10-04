@@ -9,8 +9,8 @@ import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
+import type { GraphKind } from "./graphSettings";
 
-type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "category-ratio" | "correlation-heatmap" | "network";
 type ViewMode = "side" | "overlay";
 
 const GRAPH_LABELS: Record<GraphKind, string> = {
