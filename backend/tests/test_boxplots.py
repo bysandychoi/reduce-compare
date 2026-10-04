@@ -117,6 +117,7 @@ def test_weighted_quantiles_match_unweighted_for_uniform_weights():
     누적합의 오차가 쌓이므로, 작은 범위만 보면 여유를 1e-14까지 줄여도 통과해 버린다.
     """
     # size_candidates가 실제로 만드는 크기까지 본다 (MAX_SIZE 50,000).
+    # eps=1e-13 회귀는 (total=99991, kept=50000)에서만 잡히므로 둘을 유지한다.
     sizes = list(range(2, 1001)) + [1500, 2236, 6300, 17748, 50000]
     mismatched = []
     for total in (1000.0, 4096.0, 99991.0, 500000.0):
