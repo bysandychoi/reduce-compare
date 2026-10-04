@@ -113,27 +113,37 @@ def test_weighted_quantiles_ignore_weight_scale():
 def test_weighted_quantiles_match_unweighted_for_uniform_weights():
     """대표 행마다 같은 수의 원본 행을 대표하면 가중치 1일 때와 같아야 한다.
 
-    `random_sample`이 만드는 `원본 행 수 / 대표 수` 모양을 대표 수 2~200에서 모두 본다.
-    경계 비교에 둔 여유가 너무 작으면 여기서 깨진다.
+    `random_sample`이 만드는 `원본 행 수 / 대표 수` 모양을 본다. 대표 수가 커질수록
+    누적합의 오차가 쌓이므로, 작은 범위만 보면 여유를 1e-14까지 줄여도 통과해 버린다.
     """
+    # size_candidates가 실제로 만드는 크기까지 본다 (MAX_SIZE 50,000).
+    sizes = list(range(2, 1001)) + [1500, 2236, 6300, 17748, 50000]
     mismatched = []
-    for kept in range(2, 201):
-        values = np.arange(kept, dtype=float)
-        uniform = np.full(kept, 1000.0 / kept)
-        if weighted_quantiles(values, uniform, PROBS) != \
-                weighted_quantiles(values, np.ones(kept), PROBS):
-            mismatched.append(kept)
+    for total in (1000.0, 4096.0, 99991.0, 500000.0):
+        for kept in sizes:
+            if kept > total:
+                continue
+            values = np.arange(kept, dtype=float)
+            uniform = np.full(kept, total / kept)
+            if weighted_quantiles(values, uniform, PROBS) != \
+                    weighted_quantiles(values, np.ones(kept), PROBS):
+                mismatched.append((int(total), kept))
 
-    assert mismatched == [], f"대표 수 {mismatched[:10]}에서 가중치 1일 때와 달라졌다"
+    assert mismatched == [], f"{len(mismatched)}건이 가중치 1일 때와 달라졌다: {mismatched[:5]}"
 
 
-def test_weighted_quantiles_respect_narrow_boundary():
+@pytest.mark.parametrize("below,above", [
+    (24995.0, 75005.0),        # 10만 행 — 여유가 1e-4면 틀린다
+    (249995.0, 750005.0),      # 100만 행 — 여유가 5e-6만 돼도 틀린다
+])
+def test_weighted_quantiles_respect_narrow_boundary(below, above):
     """경계 비교의 여유가 너무 크면 바로 아래 구간을 잘못 고른다.
 
     10이 24,995행 / 400이 75,005행이면 25% 지점은 10이 아니라 400이다.
+    행이 많아질수록 경계가 25%에 더 가까워져 허용 여유의 상한을 좁힌다.
     """
     values = np.array([10.0, 400.0])
-    weights = np.array([24995.0, 75005.0])
+    weights = np.array([below, above])
 
     assert weighted_quantiles(values, weights, (0.25,)) == [400.0]
 

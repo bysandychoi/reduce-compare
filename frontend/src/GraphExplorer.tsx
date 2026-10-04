@@ -26,10 +26,16 @@ function GraphPlaceholder({ label }: { label: string }) {
 
 type ColumnGraphData = HistogramData | BoxplotData;
 
-// 소수점 자리 수로 자르면 0.004가 "0"이 되어 두 상자가 같아 보인다. 유효숫자로 맞춘다.
-const number = (value: number) => Number.isFinite(value)
-  ? value.toLocaleString(undefined, { maximumSignificantDigits: 6 })
-  : "—";
+// 소수부 6자리를 항상 남긴다 (정수부 자릿수 + 6을 유효숫자로 준다).
+// 소수점 자리로 자르면 위도 세 칸이 37.56/37.57/37.57로 뭉개지고,
+// 유효숫자를 고정하면 정수부가 커질수록 소수부가 깎여 경도(127.025…) 여섯 칸이 같아진다.
+function number(value: number) {
+  if (!Number.isFinite(value)) return "—";
+  const size = Math.abs(value);
+  if (size !== 0 && size < 1e-4) return Number(value.toPrecision(6)).toExponential();
+  const whole = size >= 1 ? Math.floor(Math.log10(size)) + 1 : 0;
+  return value.toLocaleString(undefined, { maximumSignificantDigits: Math.min(21, whole + 6) });
+}
 
 function boxCaption(box: BoxSummary) {
   const shown = box.outliers.length < box.outlier_count
