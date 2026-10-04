@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { ApiError, getBoxplot, getCategoryRatios, getHistogram, getVisualization, type BoxSummary, type BoxplotData, type CategoryRatioData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
 import Boxplot from "./Boxplot";
 import CategoryRatio from "./CategoryRatio";
+import CorrelationHeatmaps from "./CorrelationHeatmaps";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
 
-type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "category-ratio" | "network";
+type GraphKind = "scatter-2d" | "scatter-3d" | "histogram" | "boxplot" | "category-ratio" | "correlation-heatmap" | "network";
 type ViewMode = "side" | "overlay";
 
 const GRAPH_LABELS: Record<GraphKind, string> = {
@@ -17,6 +18,7 @@ const GRAPH_LABELS: Record<GraphKind, string> = {
   histogram: "히스토그램",
   boxplot: "박스플롯",
   "category-ratio": "범주 비율",
+  "correlation-heatmap": "상관 히트맵",
   network: "상관 네트워크",
 };
 
@@ -113,10 +115,10 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         {byColumn && graph.data && <label>컬럼<select value={graph.column || graph.data.column} onChange={(event) => graph.setColumn(event.target.value)}>
           {graph.data.columns.map((name) => <option key={name} value={name}>{name}</option>)}
         </select></label>}
-        <fieldset><legend>보기 방식</legend>
+        {kind !== "correlation-heatmap" && <fieldset><legend>보기 방식</legend>
           <button type="button" aria-pressed={mode === "side"} onClick={() => setMode("side")}>나란히</button>
           <button type="button" aria-pressed={mode === "overlay"} onClick={() => setMode("overlay")}>겹쳐보기</button>
-        </fieldset>
+        </fieldset>}
       </div>
     </div>
     {shown && <ColumnGraphNotes data={shown} />}
@@ -136,7 +138,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
       {shown && !("edges" in shown) && !("categories" in shown) && (mode === "side"
         ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
         : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
-      {kind !== "scatter-2d" && kind !== "scatter-3d" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
+      {kind === "correlation-heatmap" && <CorrelationHeatmaps group={group} />}
+      {kind !== "scatter-2d" && kind !== "scatter-3d" && kind !== "correlation-heatmap" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
     </div>
   </section>;
 }
