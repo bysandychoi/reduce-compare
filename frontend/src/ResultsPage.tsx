@@ -4,6 +4,7 @@ import { ApiError, getResult, resultDownloadUrl, type GroupResult, type Pipeline
 import GraphExplorer from "./GraphExplorer";
 import MethodScoreBars from "./MethodScoreBars";
 import MetricTable from "./MetricTable";
+import RepresentationCloud from "./RepresentationCloud";
 import SizeScoreChart from "./SizeScoreChart";
 import SummaryCards from "./SummaryCards";
 
@@ -26,6 +27,7 @@ function GroupSummary({ group, target, jobId }: { group: GroupResult; target: nu
         </div>
       </div>
       <SummaryCards group={group} />
+      <RepresentationCloud jobId={jobId} group={group.name} />
       <MetricTable group={group} />
       <SizeScoreChart group={group} target={target} />
       <MethodScoreBars group={group} />

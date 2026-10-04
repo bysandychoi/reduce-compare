@@ -27,6 +27,12 @@ def _job(tmp_path, monkeypatch, *, cluster=True, bad=False, bad_points=False):
                       "representative_count": 20, "representative_ratio": 1,
                       "excluded_count": 0, "covered_count": 100, "minimum_target": 0,
                       "status": "반영", "reason": "군집 대표 선택"}],
+        "point_metadata": {
+            "original_clusters": [index % 2 for index in range(100)],
+            "reduced_clusters": [index % 2 for index in range(20)],
+            "original_outliers": [index == 1 for index in range(100)],
+            "reduced_outliers": [False] * 20,
+        },
     }
     detail = {"correlation": "broken" if bad else metrics}
     if cluster:
@@ -39,7 +45,7 @@ def _job(tmp_path, monkeypatch, *, cluster=True, bad=False, bad_points=False):
         "size_curve": [], "method_scores": [],
         "projection": {"method": "pca", "dimensions": 2,
                        "original": [[0] if bad_points else [0, 0], [1, 1]],
-                       "reduced": [[.2, .2]],
+                       "reduced": [[.2, .2]] * 20,
                        "original_indices": [0, 1]},
         "detail": detail,
     }
@@ -62,6 +68,9 @@ def test_report_returns_saved_points_clusters_and_relationships(tmp_path, monkey
         "average_rows_per_representative": 5,
     }
     assert payload["points"]["original"] == [[0, 0], [1, 1]]
+    assert payload["point_metadata"]["original_clusters"] == [0, 1]
+    assert payload["point_metadata"]["original_outliers"] == [False, True]
+    assert "point_metadata" not in payload["cluster_report"]
     assert payload["cluster_report"]["clusters"][0]["covered_count"] == 100
     pair = next(p for p in payload["relationships"]["pairs"]
                 if p["column_a"] == "a" and p["column_b"] == "b")
@@ -88,14 +97,25 @@ def test_report_rejects_bad_result_group_and_threshold(tmp_path, monkeypatch):
 
 
 def test_report_rejects_missing_cluster_detail_and_bad_point_dimensions(tmp_path, monkeypatch):
-    job_id = _job(tmp_path, monkeypatch, cluster=False)
+    job_id = _job(tmp_path, monkeypatch)
     path = tmp_path / job_id / "result.json"
     result = json.loads(path.read_text(encoding="utf-8"))
-    result["groups"][0]["reduction_method"] = "cluster_actual"
+    report = result["groups"][0]["detail"].pop("cluster_report")
+    path.write_text(json.dumps(result), encoding="utf-8")
+    assert client.get(f"/jobs/{job_id}/report", params={"group": "A"}).status_code == 422
+
+    result["groups"][0]["detail"]["cluster_report"] = report
+    result["groups"][0]["projection"]["original"] = [[0, 0], [1, 1]]
+    result["groups"][0]["detail"]["cluster_report"]["point_metadata"][
+        "original_clusters"
+    ][0] = "bad"
     path.write_text(json.dumps(result), encoding="utf-8")
     assert client.get(f"/jobs/{job_id}/report", params={"group": "A"}).status_code == 422
 
     result["groups"][0]["reduction_method"] = "random"
+    result["groups"][0]["detail"]["cluster_report"]["point_metadata"][
+        "original_clusters"
+    ][0] = 0
     result["groups"][0]["projection"]["original"] = [[0], [1, 1]]
     path.write_text(json.dumps(result), encoding="utf-8")
     assert client.get(f"/jobs/{job_id}/report", params={"group": "A"}).status_code == 422

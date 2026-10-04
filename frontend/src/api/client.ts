@@ -20,6 +20,7 @@ import type {
   VisualizationData,
   VisualizationOptions,
 } from "./types";
+import type { RepresentationReport } from "../reportTypes";
 
 export type * from "./types";
 
@@ -129,6 +130,13 @@ export function getRunStatus(jobId: string, options: ApiOptions = {}) {
 
 export function getResult(jobId: string, options: ApiOptions = {}) {
   return request<PipelineResults>(`/jobs/${segment(jobId)}/result`, { signal: options.signal });
+}
+
+export function getReport(jobId: string, group: string, options: ApiOptions = {}) {
+  const query = new URLSearchParams({ group });
+  return request<RepresentationReport>(
+    "/jobs/" + segment(jobId) + "/report?" + query.toString(), { signal: options.signal },
+  );
 }
 
 export function resultDownloadUrl(jobId: string, groupName: string) {

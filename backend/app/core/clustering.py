@@ -65,6 +65,12 @@ def _representation_report(x: np.ndarray, live: np.ndarray, base: MiniBatchKMean
     targets = {int(c): int(min(min_per_cluster, sizes[c])) for c in np.flatnonzero(lifted)}
     report = cluster_representation_report(labels, groups, mask, targets)
     report["excluded_label_source"] = "nearest_retained_cluster_center"
+    report["point_metadata"] = {
+        "original_clusters": labels.tolist(),
+        "reduced_clusters": [int(labels[group[0]]) for group in groups],
+        "original_outliers": mask.tolist(),
+        "reduced_outliers": [False] * len(groups),
+    }
     return report
 
 
