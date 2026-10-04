@@ -11,6 +11,7 @@ import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
 import { defaultGraphSettings, type GraphKind, type GraphSettingValue } from "./graphSettings";
+import type { NetworkLayout } from "./networkLayout";
 
 type ViewMode = "side" | "overlay";
 
@@ -144,7 +145,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
         : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
       {kind === "correlation-heatmap" && <CorrelationHeatmaps group={group} />}
-      {kind === "network" && <CorrelationNetworks jobId={jobId} group={group.name} />}
+      {kind === "network" && <CorrelationNetworks jobId={jobId} group={group.name}
+        threshold={Number(settings.correlationThreshold)} layout={settings.networkLayout as NetworkLayout} />}
       {kind !== "scatter-2d" && kind !== "scatter-3d" && kind !== "correlation-heatmap" && kind !== "network" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
     </div>
   </section>;

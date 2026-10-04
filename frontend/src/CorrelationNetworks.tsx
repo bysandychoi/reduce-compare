@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 import { ApiError, getCorrelationNetworks, type CorrelationNetworksData } from "./api/client";
 import CorrelationNetwork from "./CorrelationNetwork";
+import type { NetworkLayout } from "./networkLayout";
 
-export default function CorrelationNetworks({ jobId, group }: { jobId: string; group: string }) {
-  const [threshold, setThreshold] = useState(.5);
+export default function CorrelationNetworks({ jobId, group, threshold, layout }: { jobId: string; group: string; threshold: number; layout: NetworkLayout }) {
   const [state, setState] = useState<{ data?: CorrelationNetworksData; error?: string; loading: boolean }>({ loading: true });
   useEffect(() => {
     const controller = new AbortController();
@@ -20,10 +20,7 @@ export default function CorrelationNetworks({ jobId, group }: { jobId: string; g
   }, [group, jobId, threshold]);
   return <>
     <div className="network-controls">
-      <label>엣지 임계값 <strong>|r| ≥ {threshold.toFixed(2)}</strong>
-        <input type="range" min="0" max="1" step="0.05" value={threshold}
-          onChange={(event) => setThreshold(Number(event.target.value))} />
-      </label>
+      <strong>표시 기준 |r| ≥ {threshold.toFixed(2)}</strong>
       <div className="network-legend">
         <span className="network-legend--positive">양의 관계</span><span className="network-legend--negative">음의 관계</span><span className="network-legend--unique">한쪽에만 있음</span>
       </div>
@@ -33,8 +30,8 @@ export default function CorrelationNetworks({ jobId, group }: { jobId: string; g
     {!state.loading && !state.error && state.data && (state.data.original.nodes.length < 2
       ? <p className="graph-message">상관 네트워크에는 수치형 컬럼이 2개 이상 필요합니다.</p>
       : <div className="network-grid">
-          <CorrelationNetwork graph={state.data.original} other={state.data.reduced} title="원본" />
-          <CorrelationNetwork graph={state.data.reduced} other={state.data.original} title="축소본" />
+          <CorrelationNetwork graph={state.data.original} other={state.data.reduced} title="원본" layout={layout} />
+          <CorrelationNetwork graph={state.data.reduced} other={state.data.original} title="축소본" layout={layout} />
         </div>)}
   </>;
 }

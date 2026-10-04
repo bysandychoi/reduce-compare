@@ -57,6 +57,11 @@ export const GRAPH_SETTING_SCHEMA: readonly GraphSettingDefinition[] = [
     graphs: ["network"],
   },
   {
+    type: "range", key: "correlationThreshold", label: "엣지 임계값",
+    description: "이 절댓값 이상의 상관관계만 엣지로 표시합니다.", defaultValue: .5,
+    min: 0, max: 1, step: .05, graphs: ["network"],
+  },
+  {
     type: "boolean", key: "showLegend", label: "범례 표시",
     description: "원본·축소본과 그래프 기호를 설명하는 범례를 표시합니다.",
     defaultValue: true, graphs: ALL_GRAPHS,
