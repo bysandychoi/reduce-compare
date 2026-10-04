@@ -5,6 +5,7 @@ import type {
   ColumnChoices,
   ColumnGraphOptions,
   ColumnSelectionUpdate,
+  CorrelationNetworksData,
   GroupUpdate,
   GroupsView,
   Health,
@@ -158,6 +159,16 @@ export function getCategoryRatios(jobId: string, view: ColumnGraphOptions, optio
   if (view.column !== undefined) query.set("column", view.column);
   return request<CategoryRatioData>(
     `/jobs/${segment(jobId)}/category-ratios?${query.toString()}`,
+    { signal: options.signal },
+  );
+}
+
+export function getCorrelationNetworks(
+  jobId: string, group: string, threshold: number, options: ApiOptions = {},
+) {
+  const query = new URLSearchParams({ group, threshold: String(threshold) });
+  return request<CorrelationNetworksData>(
+    `/jobs/${segment(jobId)}/correlation-network?${query.toString()}`,
     { signal: options.signal },
   );
 }

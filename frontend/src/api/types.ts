@@ -161,6 +161,21 @@ export type CategoryRatioData = {
   dropped_original: number;
   dropped_reduced: number;
 };
+export type NetworkNode = { id: string; label: string };
+export type NetworkEdge = {
+  source: string;
+  target: string;
+  correlation: number;
+  weight: number;
+  sign: "positive" | "negative" | "zero";
+};
+export type NetworkGraph = { nodes: NetworkNode[]; edges: NetworkEdge[]; threshold: number };
+export type CorrelationNetworksData = {
+  group: string;
+  method: string;
+  original: NetworkGraph;
+  reduced: NetworkGraph;
+};
 export type VisualizationData = {
   group: string;
   mode: VisualizationMode;

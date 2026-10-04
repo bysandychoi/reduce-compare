@@ -4,6 +4,7 @@ import { ApiError, getBoxplot, getCategoryRatios, getHistogram, getVisualization
 import Boxplot from "./Boxplot";
 import CategoryRatio from "./CategoryRatio";
 import CorrelationHeatmaps from "./CorrelationHeatmaps";
+import CorrelationNetworks from "./CorrelationNetworks";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
@@ -115,14 +116,14 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         {byColumn && graph.data && <label>컬럼<select value={graph.column || graph.data.column} onChange={(event) => graph.setColumn(event.target.value)}>
           {graph.data.columns.map((name) => <option key={name} value={name}>{name}</option>)}
         </select></label>}
-        {kind !== "correlation-heatmap" && <fieldset><legend>보기 방식</legend>
+        {kind !== "correlation-heatmap" && kind !== "network" && <fieldset><legend>보기 방식</legend>
           <button type="button" aria-pressed={mode === "side"} onClick={() => setMode("side")}>나란히</button>
           <button type="button" aria-pressed={mode === "overlay"} onClick={() => setMode("overlay")}>겹쳐보기</button>
         </fieldset>}
       </div>
     </div>
     {shown && <ColumnGraphNotes data={shown} />}
-    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : visual.loading}>
+    <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : kind === "scatter-2d" || kind === "scatter-3d" ? visual.loading : undefined}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.error && <p className="graph-message graph-message--error">{visual.error}</p>}
       {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" /><ScatterPanel data={visual.data} source="reduced" title="축소본" /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" />)}
@@ -139,7 +140,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
         : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
       {kind === "correlation-heatmap" && <CorrelationHeatmaps group={group} />}
-      {kind !== "scatter-2d" && kind !== "scatter-3d" && kind !== "correlation-heatmap" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
+      {kind === "network" && <CorrelationNetworks jobId={jobId} group={group.name} />}
+      {kind !== "scatter-2d" && kind !== "scatter-3d" && kind !== "correlation-heatmap" && kind !== "network" && !byColumn && (mode === "side" ? <><GraphPlaceholder label={`원본 · ${label}`} /><GraphPlaceholder label={`축소본 · ${label}`} /></> : <GraphPlaceholder label={`원본 + 축소본 · ${label}`} />)}
     </div>
   </section>;
 }
