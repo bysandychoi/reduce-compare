@@ -91,10 +91,13 @@ def run_once(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo], selecte
     x_red = x[red.indices] if len(red.indices) else _virtual_features(x, red)
     struct = structure_metrics(x, x_red, seed)
     total = overall_score(dist, corr["score"], struct["score"])
+    detail = {"columns": [c.__dict__ for c in per_col], "correlation": corr,
+              "structure": struct, "notes": red.notes, "excluded": red.excluded}
+    if red.cluster_report is not None:
+        detail["cluster_report"] = red.cluster_report
     return Attempt(method=method, size=red.size, score=total.total, distribution=dist,
                    correlation=corr["score"], structure=struct["score"], reduction=red, frame=frame,
-                   detail={"columns": [c.__dict__ for c in per_col], "correlation": corr,
-                           "structure": struct, "notes": red.notes, "excluded": red.excluded})
+                   detail=detail)
 
 
 def _virtual_features(x: np.ndarray, red: Reduction) -> np.ndarray:
