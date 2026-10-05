@@ -1,0 +1,454 @@
+{
+  "lot": {
+    "id": "LOT-24017",
+    "product": "AX7",
+    "operation": "Etch-02",
+    "quantity": 1200,
+    "due": "14:30",
+    "priority": "HIGH",
+    "recipe": "R-ETCH-A7"
+  },
+  "nodes": [
+    {
+      "id": "LOT-24017",
+      "kind": "lot",
+      "label": "LOT-24017",
+      "detail": "AX7 · Etch-02 · 1,200 wafers",
+      "warning": false
+    },
+    {
+      "id": "ETCH-01",
+      "kind": "equipment",
+      "label": "ETCH-01",
+      "detail": "가능 · Ready",
+      "warning": false
+    },
+    {
+      "id": "spec:ETCH-01:CHAMBER-A:온도",
+      "kind": "spec",
+      "label": "온도 · ETCH-01",
+      "detail": "CHAMBER-A · 요구 58~62℃ · 현재 60℃",
+      "warning": false,
+      "resource": "CHAMBER-A"
+    },
+    {
+      "id": "spec:ETCH-01:CHAMBER-A:압력",
+      "kind": "spec",
+      "label": "압력 · ETCH-01",
+      "detail": "CHAMBER-A · 요구 42~48 mTorr · 현재 45",
+      "warning": false,
+      "resource": "CHAMBER-A"
+    },
+    {
+      "id": "spec:ETCH-01:GAS-CF4:유량",
+      "kind": "spec",
+      "label": "유량 · ETCH-01",
+      "detail": "GAS-CF4 · 요구 ≥40 slm · 현재 44",
+      "warning": false,
+      "resource": "GAS-CF4"
+    },
+    {
+      "id": "ETCH-03",
+      "kind": "equipment",
+      "label": "ETCH-03",
+      "detail": "가능 · Setup 필요",
+      "warning": false
+    },
+    {
+      "id": "spec:ETCH-03:CHAMBER-B:온도",
+      "kind": "spec",
+      "label": "온도 · ETCH-03",
+      "detail": "CHAMBER-B · 요구 58~62℃ · 현재 59℃",
+      "warning": false,
+      "resource": "CHAMBER-B"
+    },
+    {
+      "id": "spec:ETCH-03:CHAMBER-B:압력",
+      "kind": "spec",
+      "label": "압력 · ETCH-03",
+      "detail": "CHAMBER-B · 요구 42~48 mTorr · 현재 47",
+      "warning": false,
+      "resource": "CHAMBER-B"
+    },
+    {
+      "id": "spec:ETCH-03:TOOL-KIT-7:Tool",
+      "kind": "spec",
+      "label": "Tool · ETCH-03",
+      "detail": "TOOL-KIT-7 · 요구 KIT-7 · 현재 KIT-7",
+      "warning": false,
+      "resource": "TOOL-KIT-7"
+    },
+    {
+      "id": "ETCH-05",
+      "kind": "equipment",
+      "label": "ETCH-05",
+      "detail": "조건부 · CF4 보충 필요",
+      "warning": true
+    },
+    {
+      "id": "spec:ETCH-05:CHAMBER-C:온도",
+      "kind": "spec",
+      "label": "온도 · ETCH-05",
+      "detail": "CHAMBER-C · 요구 58~62℃ · 현재 61℃",
+      "warning": false,
+      "resource": "CHAMBER-C"
+    },
+    {
+      "id": "spec:ETCH-05:CHAMBER-C:압력",
+      "kind": "spec",
+      "label": "압력 · ETCH-05",
+      "detail": "CHAMBER-C · 요구 42~48 mTorr · 현재 46",
+      "warning": false,
+      "resource": "CHAMBER-C"
+    },
+    {
+      "id": "spec:ETCH-05:GAS-CF4:유량",
+      "kind": "spec",
+      "label": "유량 · ETCH-05",
+      "detail": "GAS-CF4 · 요구 ≥40 slm · 현재 28",
+      "warning": true,
+      "resource": "GAS-CF4"
+    },
+    {
+      "id": "CHAMBER-A",
+      "kind": "resource",
+      "label": "CHAMBER-A",
+      "detail": "Ready",
+      "shared": false,
+      "warning": false
+    },
+    {
+      "id": "GAS-CF4",
+      "kind": "resource",
+      "label": "GAS-CF4",
+      "detail": "44 slm",
+      "shared": true,
+      "warning": false
+    },
+    {
+      "id": "GAS-N2",
+      "kind": "resource",
+      "label": "GAS-N2",
+      "detail": "84%",
+      "shared": true,
+      "warning": false
+    },
+    {
+      "id": "OPERATOR-L2",
+      "kind": "resource",
+      "label": "OPERATOR-L2",
+      "detail": "2명",
+      "shared": true,
+      "warning": false
+    },
+    {
+      "id": "CHAMBER-B",
+      "kind": "resource",
+      "label": "CHAMBER-B",
+      "detail": "Ready",
+      "shared": false,
+      "warning": false
+    },
+    {
+      "id": "TOOL-KIT-7",
+      "kind": "resource",
+      "label": "TOOL-KIT-7",
+      "detail": "Ready",
+      "shared": true,
+      "warning": false
+    },
+    {
+      "id": "CHAMBER-C",
+      "kind": "resource",
+      "label": "CHAMBER-C",
+      "detail": "PM 17:00",
+      "shared": false,
+      "warning": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "LOT-24017",
+      "target": "ETCH-01"
+    },
+    {
+      "source": "ETCH-01",
+      "target": "CHAMBER-A"
+    },
+    {
+      "source": "ETCH-01",
+      "target": "GAS-CF4"
+    },
+    {
+      "source": "ETCH-01",
+      "target": "GAS-N2"
+    },
+    {
+      "source": "ETCH-01",
+      "target": "OPERATOR-L2"
+    },
+    {
+      "source": "CHAMBER-A",
+      "target": "spec:ETCH-01:CHAMBER-A:온도"
+    },
+    {
+      "source": "CHAMBER-A",
+      "target": "spec:ETCH-01:CHAMBER-A:압력"
+    },
+    {
+      "source": "GAS-CF4",
+      "target": "spec:ETCH-01:GAS-CF4:유량"
+    },
+    {
+      "source": "LOT-24017",
+      "target": "ETCH-03"
+    },
+    {
+      "source": "ETCH-03",
+      "target": "CHAMBER-B"
+    },
+    {
+      "source": "ETCH-03",
+      "target": "GAS-CF4"
+    },
+    {
+      "source": "ETCH-03",
+      "target": "TOOL-KIT-7"
+    },
+    {
+      "source": "ETCH-03",
+      "target": "OPERATOR-L2"
+    },
+    {
+      "source": "CHAMBER-B",
+      "target": "spec:ETCH-03:CHAMBER-B:온도"
+    },
+    {
+      "source": "CHAMBER-B",
+      "target": "spec:ETCH-03:CHAMBER-B:압력"
+    },
+    {
+      "source": "TOOL-KIT-7",
+      "target": "spec:ETCH-03:TOOL-KIT-7:Tool"
+    },
+    {
+      "source": "LOT-24017",
+      "target": "ETCH-05"
+    },
+    {
+      "source": "ETCH-05",
+      "target": "CHAMBER-C"
+    },
+    {
+      "source": "ETCH-05",
+      "target": "GAS-CF4"
+    },
+    {
+      "source": "ETCH-05",
+      "target": "TOOL-KIT-7"
+    },
+    {
+      "source": "CHAMBER-C",
+      "target": "spec:ETCH-05:CHAMBER-C:온도"
+    },
+    {
+      "source": "CHAMBER-C",
+      "target": "spec:ETCH-05:CHAMBER-C:압력"
+    },
+    {
+      "source": "GAS-CF4",
+      "target": "spec:ETCH-05:GAS-CF4:유량"
+    }
+  ],
+  "equipment": [
+    {
+      "id": "ETCH-01",
+      "fit": "가능",
+      "state": "Ready",
+      "process": 34,
+      "setup": 0,
+      "resources": [
+        [
+          "CHAMBER-A",
+          "Ready",
+          false
+        ],
+        [
+          "GAS-CF4",
+          "44 slm",
+          true
+        ],
+        [
+          "GAS-N2",
+          "84%",
+          true
+        ],
+        [
+          "OPERATOR-L2",
+          "2명",
+          true
+        ]
+      ],
+      "specs": [
+        [
+          "CHAMBER-A",
+          "온도",
+          "58~62℃",
+          "60℃",
+          true
+        ],
+        [
+          "CHAMBER-A",
+          "압력",
+          "42~48 mTorr",
+          "45",
+          true
+        ],
+        [
+          "GAS-CF4",
+          "유량",
+          "≥40 slm",
+          "44",
+          true
+        ]
+      ]
+    },
+    {
+      "id": "ETCH-03",
+      "fit": "가능",
+      "state": "Setup 필요",
+      "process": 32,
+      "setup": 18,
+      "resources": [
+        [
+          "CHAMBER-B",
+          "Ready",
+          false
+        ],
+        [
+          "GAS-CF4",
+          "44 slm",
+          true
+        ],
+        [
+          "TOOL-KIT-7",
+          "Ready",
+          true
+        ],
+        [
+          "OPERATOR-L2",
+          "2명",
+          true
+        ]
+      ],
+      "specs": [
+        [
+          "CHAMBER-B",
+          "온도",
+          "58~62℃",
+          "59℃",
+          true
+        ],
+        [
+          "CHAMBER-B",
+          "압력",
+          "42~48 mTorr",
+          "47",
+          true
+        ],
+        [
+          "TOOL-KIT-7",
+          "Tool",
+          "KIT-7",
+          "KIT-7",
+          true
+        ]
+      ]
+    },
+    {
+      "id": "ETCH-05",
+      "fit": "조건부",
+      "state": "CF4 보충 필요",
+      "process": 36,
+      "setup": 8,
+      "resources": [
+        [
+          "CHAMBER-C",
+          "PM 17:00",
+          false
+        ],
+        [
+          "GAS-CF4",
+          "28 slm",
+          true
+        ],
+        [
+          "TOOL-KIT-7",
+          "Ready",
+          true
+        ]
+      ],
+      "specs": [
+        [
+          "CHAMBER-C",
+          "온도",
+          "58~62℃",
+          "61℃",
+          true
+        ],
+        [
+          "CHAMBER-C",
+          "압력",
+          "42~48 mTorr",
+          "46",
+          true
+        ],
+        [
+          "GAS-CF4",
+          "유량",
+          "≥40 slm",
+          "28",
+          false
+        ]
+      ]
+    }
+  ],
+  "spec_rows": [
+    {
+      "equipment_index": 0,
+      "node_id": "spec:ETCH-01:CHAMBER-A:온도"
+    },
+    {
+      "equipment_index": 0,
+      "node_id": "spec:ETCH-01:CHAMBER-A:압력"
+    },
+    {
+      "equipment_index": 0,
+      "node_id": "spec:ETCH-01:GAS-CF4:유량"
+    },
+    {
+      "equipment_index": 1,
+      "node_id": "spec:ETCH-03:CHAMBER-B:온도"
+    },
+    {
+      "equipment_index": 1,
+      "node_id": "spec:ETCH-03:CHAMBER-B:압력"
+    },
+    {
+      "equipment_index": 1,
+      "node_id": "spec:ETCH-03:TOOL-KIT-7:Tool"
+    },
+    {
+      "equipment_index": 2,
+      "node_id": "spec:ETCH-05:CHAMBER-C:온도"
+    },
+    {
+      "equipment_index": 2,
+      "node_id": "spec:ETCH-05:CHAMBER-C:압력"
+    },
+    {
+      "equipment_index": 2,
+      "node_id": "spec:ETCH-05:GAS-CF4:유량"
+    }
+  ]
+}
