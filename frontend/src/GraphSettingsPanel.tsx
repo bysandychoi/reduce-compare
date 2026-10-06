@@ -6,6 +6,7 @@ type Props = {
   graph: GraphKind;
   settings: GraphSettings;
   onChange: (key: string, value: GraphSettingValue) => void;
+  onReset: () => void;
 };
 
 function SettingControl({ definition, id, value, onChange }: {
@@ -44,11 +45,12 @@ function SettingControl({ definition, id, value, onChange }: {
   </label>;
 }
 
-export default function GraphSettingsPanel({ graph, settings, onChange }: Props) {
+export default function GraphSettingsPanel({ graph, settings, onChange, onReset }: Props) {
   const prefix = useId();
   const definitions = settingsForGraph(graph);
   return <details className="graph-settings" open>
     <summary><span>그래프 디자인</span><small>표시만 바꾸며 축소 결과는 다시 계산하지 않습니다.</small></summary>
+    <button type="button" className="graph-settings__reset" onClick={onReset}>기본값 복원</button>
     <div className="graph-settings__grid">
       {definitions.map((definition) => <SettingControl key={definition.key}
         definition={definition} id={`${prefix}-${definition.key}`}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 
 import { getBoxplot, getCategoryRatios, getHistogram, type BoxSummary, type BoxplotData, type CategoryRatioData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
 import Boxplot from "./Boxplot";
@@ -13,7 +13,7 @@ import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
 import useAxisCompatibility from "./useAxisCompatibility";
 import useVisualization from "./useVisualization";
-import { defaultGraphSettings, type GraphKind, type GraphSettingValue } from "./graphSettings";
+import { defaultGraphSettings, type GraphKind, type GraphSettingValue, type GraphSettings } from "./graphSettings";
 import type { NetworkLayout } from "./networkLayout";
 
 type ViewMode = "side" | "overlay";
@@ -44,6 +44,14 @@ function numericAxisColumns(group: GroupResult) {
     const item = column as { name?: unknown; kind?: unknown };
     return item.kind === "numeric" && typeof item.name === "string" ? [item.name] : [];
   });
+}
+
+function restoreGraphDefaults(settings: Dispatch<SetStateAction<GraphSettings>>,
+  axes: Array<Dispatch<SetStateAction<string>>>, projection: Dispatch<SetStateAction<ProjectionMethod>>,
+  method: ProjectionMethod) {
+  settings(defaultGraphSettings());
+  axes.forEach((setAxis, index) => setAxis(`projection:${index}`));
+  projection(method);
 }
 
 // 소수부 6자리를 항상 남긴다 (정수부 자릿수 + 6을 유효숫자로 준다).
@@ -114,6 +122,7 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     }
     return { ...current, [key]: value, ...(key === "originalColor" || key === "reducedColor" ? { palette: "custom" } : {}) };
   });
+  const resetSettings = () => restoreGraphDefaults(setSettings, [setXAxis, setYAxis, setZAxis], setProjection, group.projection.method as ProjectionMethod);
   const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
   const visual = useVisualization(jobId, group, kind, projection, xAxis, yAxis, zAxis);
   const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
@@ -127,7 +136,6 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
   const opacity = Number(settings.opacity);
   const weightByRepresentative = Boolean(settings.weightPointSize);
   const byColumn = kind === "histogram" || kind === "boxplot" || kind === "category-ratio";
-  // shown은 로딩·오류·컬럼 전환 중에는 undefined다 (직전 컬럼 그래프가 남지 않게). 선택 상자는 data를 본다.
   const shown: ColumnGraphData | undefined = graph.shown;
   return <section className="graph-section" aria-labelledby="graph-title">
     <div className="graph-heading">
@@ -154,7 +162,7 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         </fieldset>}
       </div>
     </div>
-    <GraphSettingsPanel graph={kind} settings={settings} onChange={setGraphSetting} />
+    <GraphSettingsPanel graph={kind} settings={settings} onChange={setGraphSetting} onReset={resetSettings} />
     {shown && <ColumnGraphNotes data={shown} />}
     <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : kind === "scatter-2d" || kind === "scatter-3d" ? visual.loading : undefined}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}

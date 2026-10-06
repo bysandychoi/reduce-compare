@@ -570,6 +570,9 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .graph-settings summary { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; color: var(--accent); cursor: pointer; }
 .graph-settings summary span { font-size: 13px; font-weight: 800; }
 .graph-settings summary small { color: var(--sub); font-size: 11px; }
+.graph-settings__reset { display: block; margin: 0 14px 10px auto; padding: 7px 11px; border: 1px solid #9bb2c4; border-radius: 8px; background: white; color: var(--accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.graph-settings__reset:hover { background: var(--accent-soft); }
+.graph-settings__reset:focus-visible { outline: 3px solid #82b9db; outline-offset: 2px; }
 .graph-settings__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 2px 14px 14px; }
 .graph-setting { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: white; }
 .graph-setting > span:first-child { display: grid; gap: 2px; }
