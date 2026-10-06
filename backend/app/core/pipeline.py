@@ -1,10 +1,13 @@
 """축소 크기 자동 결정과 방식 선택 (T050 후보, T051 최소 크기 탐색, T052 방식 추천)."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from threading import Lock
 
 import numpy as np
 import pandas as pd
+from threadpoolctl import threadpool_limits
 
 from app.core.clustering import cluster_reduce, virtual_rows
 from app.core.ingest import collect_csv_files
@@ -17,6 +20,8 @@ from app.core.structure import overall_score, structure_metrics
 
 DEFAULT_TARGET = 85.0       # 유사도 기준치 기본값 (T003 결정)
 MIN_SIZE, MAX_SIZE = 100, 50000
+SEARCH_WORKERS = 2
+_THREADPOOL_LIMIT_LOCK = Lock()
 
 
 @dataclass
@@ -105,21 +110,39 @@ def _virtual_features(x: np.ndarray, red: Reduction) -> np.ndarray:
     return np.vstack([x[m].mean(axis=0) for m in (red.members or [])])
 
 
+def _run_candidate_batch(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo],
+                         selected: list[str], method: str, candidates: list[int],
+                         seed: int) -> list[Attempt]:
+    """후보를 제한된 스레드에서 실행하고 크기 순서로 결과를 돌려준다."""
+    with _THREADPOOL_LIMIT_LOCK, threadpool_limits(limits=1), \
+            ThreadPoolExecutor(max_workers=len(candidates)) as executor:
+        futures = [executor.submit(run_once, df, x, columns, selected, method, size, seed)
+                   for size in candidates]
+        return [future.result() for future in futures]
+
+
 def search_size(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo], selected: list[str],
                 target: float = DEFAULT_TARGET, method: str = "cluster_actual",
-                seed: int = 0) -> tuple[Attempt, list[dict]]:
-    """기준치를 넘는 가장 작은 크기를 찾는다 (T051). (선택된 결과, 크기별 점수 곡선)."""
+                seed: int = 0, workers: int = SEARCH_WORKERS) -> tuple[Attempt, list[dict]]:
+    """작은 배치 병렬 평가와 배치 사이 조기 종료로 최소 통과 크기를 찾는다."""
+    if not 1 <= workers <= SEARCH_WORKERS:
+        raise ValueError(f"탐색 worker 수는 1~{SEARCH_WORKERS}이어야 합니다")
     curve: list[dict] = []
     best: Attempt | None = None
-    for n in size_candidates(len(x)):
-        attempt = run_once(df, x, columns, selected, method, n, seed)
-        curve.append({"size": attempt.size, "score": attempt.score,
-                      "distribution": attempt.distribution, "correlation": attempt.correlation,
-                      "structure": attempt.structure})
-        if best is None or attempt.score > best.score:
-            best = attempt
-        if attempt.score >= target:
-            return attempt, curve          # 기준치를 넘는 가장 작은 크기에서 멈춘다
+    candidates = size_candidates(len(x))
+    for offset in range(0, len(candidates), workers):
+        batch = candidates[offset:offset + workers]
+        attempts = ([run_once(df, x, columns, selected, method, batch[0], seed)]
+                    if len(batch) == 1 else
+                    _run_candidate_batch(df, x, columns, selected, method, batch, seed))
+        for attempt in attempts:
+            curve.append({"size": attempt.size, "score": attempt.score,
+                          "distribution": attempt.distribution,
+                          "correlation": attempt.correlation, "structure": attempt.structure})
+            if best is None or attempt.score > best.score:
+                best = attempt
+            if attempt.score >= target:
+                return attempt, curve
     return best, curve                     # 끝까지 못 넘으면 가장 높은 점수를 쓴다
 
 
