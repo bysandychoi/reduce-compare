@@ -21,11 +21,13 @@ dist/
 .vite/
 *.tsbuildinfo
 
-# 데이터 (원본 CSV는 저장소에 넣지 않음)
+# 데이터 (원본 CSV는 저장소에 넣지 않음; 관리 대상 합성 샘플은 아래 예외)
 sample_data/**
 !sample_data/.gitkeep
 *.csv
 *.parquet
+!samples/web-demo/factory-scheduling/
+!samples/web-demo/factory-scheduling/*.csv
 
 # 작업 산출물
 uploads/
