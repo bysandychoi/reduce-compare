@@ -10,7 +10,13 @@ from app.core.metrics import (
     numeric_metrics,
 )
 from app.core.schema import classify_column
-from app.core.structure import coverage_metrics, overall_score, trustworthiness_score
+from app.core.structure import (
+    COVERAGE_SUBSAMPLE,
+    TRUST_SUBSAMPLE,
+    coverage_metrics,
+    overall_score,
+    trustworthiness_score,
+)
 
 ROWS = 2000
 
@@ -94,6 +100,21 @@ def test_trustworthiness_range():
     assert 0.8 <= t <= 1.0          # 사실상 2차원 데이터는 투영해도 이웃이 잘 지켜진다
 
 
+@pytest.mark.parametrize("rows", [100, TRUST_SUBSAMPLE + 10])
+def test_trustworthiness_respects_subsample_limit(monkeypatch, rows):
+    seen = []
+
+    def record_sample(original, projected, n_neighbors):
+        seen.append(len(original))
+        return 0.9
+
+    monkeypatch.setattr("app.core.structure.trustworthiness", record_sample)
+    x = np.random.default_rng(2).normal(size=(rows, 3))
+
+    assert trustworthiness_score(x, seed=5) == 0.9
+    assert seen == [min(rows, TRUST_SUBSAMPLE)]
+
+
 def test_coverage_closer_is_better():
     rng = np.random.default_rng(0)
     x = rng.normal(0, 1, (3000, 4))
@@ -101,6 +122,17 @@ def test_coverage_closer_is_better():
     far = coverage_metrics(x, rng.normal(6, 0.2, (600, 4)))
     assert near["score"] > far["score"] + 20
     assert near["mean_distance"] < far["mean_distance"]
+
+
+@pytest.mark.parametrize("rows", [1000, COVERAGE_SUBSAMPLE + 10])
+def test_coverage_respects_subsample_limit(rows):
+    rng = np.random.default_rng(3)
+    original = rng.normal(size=(rows, 3))
+    reduced = original[:100]
+
+    result = coverage_metrics(original, reduced, seed=4)
+
+    assert result["sampled"] == min(rows, COVERAGE_SUBSAMPLE)
 
 
 def test_coverage_needs_points():
