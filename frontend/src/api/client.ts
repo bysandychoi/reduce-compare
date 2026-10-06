@@ -189,6 +189,9 @@ export function getVisualization(jobId: string, view: VisualizationOptions, opti
   if (view.seed !== undefined) query.set("seed", String(view.seed));
   if (view.projection_method !== undefined) query.set("projection_method", view.projection_method);
   if (view.projection_dimensions !== undefined) query.set("projection_dimensions", String(view.projection_dimensions));
+  if (view.x_axis !== undefined) query.set("x_axis", view.x_axis);
+  if (view.y_axis !== undefined) query.set("y_axis", view.y_axis);
+  if (view.z_axis !== undefined) query.set("z_axis", view.z_axis);
   return request<VisualizationData>(
     `/jobs/${segment(jobId)}/visualization?${query.toString()}`,
     { signal: options.signal },

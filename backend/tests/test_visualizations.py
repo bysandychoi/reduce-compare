@@ -15,6 +15,17 @@ def _write_result(tmp_path, monkeypatch, count=100_000, method="pca", weights=Tr
     job_id = "a" * 32
     directory = tmp_path / job_id
     directory.mkdir()
+    uploads = directory / "uploads"
+    uploads.mkdir()
+    values = np.arange(count)
+    (uploads / "large.csv").write_text(
+        "value\n" + "\n".join(map(str, values)), encoding="utf-8",
+    )
+    reduced_directory = directory / "reduced"
+    reduced_directory.mkdir()
+    (reduced_directory / "group-1.csv").write_text(
+        "value\n" + "\n".join(map(str, values[::100])), encoding="utf-8",
+    )
     points = [[float(i % 1000), float(i // 1000)] for i in range(count)]
     projection = {
         "method": method, "dimensions": 2, "original": points,
@@ -25,7 +36,8 @@ def _write_result(tmp_path, monkeypatch, count=100_000, method="pca", weights=Tr
         "prepared_rows": count, "reduced_rows": len(projection["reduced"]),
         "reduction_method": "random",
         "score": {"total": 90, "distribution": 90, "correlation": 90, "structure": 90},
-        "size_curve": [], "method_scores": [], "projection": projection, "detail": {},
+        "size_curve": [], "method_scores": [], "projection": projection,
+        "detail": {"columns": [{"name": "value", "kind": "numeric"}]},
     }
     (directory / "run.json").write_text(
         json.dumps({"state": "done", "progress": 100, "stage": "완료"}), encoding="utf-8"
@@ -109,6 +121,46 @@ def test_visualization_validates_group_and_limits(tmp_path, monkeypatch):
     assert client.get(base, params={"group": "missing"}).status_code == 404
     assert client.get(base, params={"group": "A", "max_points": 0}).status_code == 422
     assert client.get(base, params={"group": "A", "bins": 101}).status_code == 422
+
+
+def test_visualization_maps_numeric_column_to_sampled_points(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=1000)
+    response = client.get(
+        f"/jobs/{job_id}/visualization",
+        params={"group": "A", "max_points": 20, "seed": 3, "x_axis": "column:value"},
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["axis_labels"] == ["value", "PCA 2"]
+    assert [point[0] for point in payload["original_points"]] == payload["original_indices"]
+    assert [point[0] for point in payload["reduced_points"]] == [
+        index * 100 for index in payload["reduced_indices"]
+    ]
+
+
+def test_visualization_rejects_unknown_axis_and_2d_z_axis(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=100)
+    base = f"/jobs/{job_id}/visualization"
+    assert client.get(base, params={"group": "A", "x_axis": "column:missing"}).status_code == 422
+    assert client.get(base, params={"group": "A", "z_axis": "projection:2"}).status_code == 422
+    assert client.get(
+        base, params={"group": "A", "x_axis": "projection:2"},
+    ).status_code == 422
+
+
+def test_visualization_maps_numeric_column_to_three_dimensional_axis(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=100)
+    response = client.get(f"/jobs/{job_id}/visualization", params={
+        "group": "A", "projection_dimensions": 3, "z_axis": "column:value",
+    })
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["axis_labels"] == ["PCA 1", "PCA 2", "value"]
+    assert [point[2] for point in payload["reduced_points"]] == [
+        index * 100 for index in payload["reduced_indices"]
+    ]
 
 
 def test_visualization_switches_projection_method(tmp_path, monkeypatch):

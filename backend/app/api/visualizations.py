@@ -7,9 +7,8 @@ import numpy as np
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from app.api.groups import job_directory
-from app.api.results import get_result
-from app.core.projection import ProjectionResult, project_comparison
+from app.api.visualization_axes import visualization_response
+from app.core.projection import ProjectionResult
 from app.models.results import GroupResult
 
 router = APIRouter(tags=["jobs"])
@@ -33,14 +32,10 @@ class VisualizationData(BaseModel):
     original_density: DensityGrid | None = None
     reduced_points: list[list[float]]
     reduced_weights: list[float] = Field(default_factory=list)
+    reduced_indices: list[int] = Field(default_factory=list)
+    axis_labels: list[str] = Field(default_factory=list)
+    axis_columns: list[str] = Field(default_factory=list)
     projection_method: Literal["pca", "umap"]
-
-
-def _group(result, name: str) -> GroupResult:
-    for group in result.groups:
-        if group.name == name:
-            return group
-    raise HTTPException(status.HTTP_404_NOT_FOUND, "결과 그룹을 찾을 수 없습니다")
 
 
 def _sample(points: list[list[float]], indices: list[int] | None,
@@ -64,18 +59,24 @@ def _density(points: list[list[float]], bins: int) -> DensityGrid:
     )
 
 
+def _aligned_weights(weights: np.ndarray | None, indices: list[int], total: int) -> list[float]:
+    if weights is None:
+        return []
+    values = np.asarray(weights, dtype=float)
+    if (values.ndim != 1 or len(values) != total or not np.isfinite(values).all()
+            or (values <= 0).any()):
+        return []
+    return values[np.asarray(indices, dtype=int)].tolist()
+
+
 def build_visualization(group: GroupResult, mode: Literal["sample", "density"],
                         max_points: int, bins: int, seed: int,
-                        reduced_weights: np.ndarray | None = None) -> VisualizationData:
+                        reduced_weights: np.ndarray | None = None,
+                        axis_columns: list[str] | None = None) -> VisualizationData:
     """검증된 그룹 결과를 크기 제한이 있는 그래프 자료로 변환한다."""
     projection = group.projection
     reduced, reduced_indices = _sample(projection.reduced, None, max_points, seed + 1)
-    aligned_weights = None
-    if reduced_weights is not None:
-        candidate = np.asarray(reduced_weights, dtype=float)
-        if (candidate.ndim == 1 and len(candidate) == len(projection.reduced)
-                and np.isfinite(candidate).all() and (candidate > 0).all()):
-            aligned_weights = candidate[np.asarray(reduced_indices, dtype=int)].tolist()
+    aligned_weights = _aligned_weights(reduced_weights, reduced_indices, len(projection.reduced))
     common = {
         "group": group.name,
         "mode": mode,
@@ -84,7 +85,13 @@ def build_visualization(group: GroupResult, mode: Literal["sample", "density"],
         "original_projected": len(projection.original),
         "reduced_rows": group.reduced_rows,
         "reduced_points": reduced,
-        "reduced_weights": aligned_weights or [],
+        "reduced_weights": aligned_weights,
+        "reduced_indices": reduced_indices,
+        "axis_labels": [
+            f"{projection.method.upper()} {index + 1}"
+            for index in range(projection.dimensions)
+        ],
+        "axis_columns": axis_columns or [],
         "projection_method": projection.method,
     }
     if mode == "density":
@@ -105,30 +112,14 @@ def get_visualization(
     seed: int = 0,
     projection_method: Literal["pca", "umap"] | None = None,
     projection_dimensions: int | None = Query(default=None, ge=2, le=3),
+    x_axis: str | None = Query(default=None, max_length=256),
+    y_axis: str | None = Query(default=None, max_length=256),
+    z_axis: str | None = Query(default=None, max_length=256),
 ) -> VisualizationData:
-    result = get_result(job_id)
-    selected = _group(result, group)
-    group_index = next(i for i, item in enumerate(result.groups) if item.name == group)
-    source_path = job_directory(job_id) / "projection-source" / f"group-{group_index + 1}.npz"
-    weights = None
-    if source_path.is_file():
-        try:
-            with np.load(source_path) as source:
-                if "weights" in source.files:
-                    weights = np.asarray(source["weights"], dtype=float)
-        except (OSError, ValueError):
-            weights = None
-    method = projection_method or selected.projection.method
-    dimensions = projection_dimensions or selected.projection.dimensions
-    if method != selected.projection.method or dimensions != selected.projection.dimensions:
-        if not source_path.is_file():
-            raise HTTPException(status.HTTP_409_CONFLICT, "투영 방식 전환 자료가 없습니다")
-        with np.load(source_path) as source:
-            projected = project_comparison(
-                source["original"], source["reduced"], method, dimensions, seed,
-            )
-        selected = selected.model_copy(update={"projection": _projection_model(projected)})
-    return build_visualization(selected, mode, max_points, bins, seed, weights)
+    return visualization_response(
+        job_id, group, mode, max_points, bins, seed, projection_method,
+        projection_dimensions, x_axis, y_axis, z_axis, build_visualization, _projection_model,
+    )
 
 
 def _projection_model(projected: ProjectionResult):

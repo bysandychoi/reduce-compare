@@ -13,8 +13,8 @@ function trace(points: number[][], name: string, color: string, sizes: number[],
   };
 }
 
-function layout(title: string, method: string) {
-  const axis = (number: number) => ({ title: `${method} ${number}`, showbackground: false });
+function layout(title: string, method: string, labels: string[] = []) {
+  const axis = (number: number) => ({ title: labels[number - 1] ?? `${method} ${number}`, showbackground: false });
   return {
     title: { text: title, x: .03, font: { size: 14 } }, margin: { l: 0, r: 0, t: 42, b: 0 },
     paper_bgcolor: "#fff", plot_bgcolor: "#fff", showlegend: true,
@@ -41,12 +41,12 @@ export default function ThreeDScatter({ data, mode, originalColor, reducedColor,
         plots.push(await Plotly.newPlot(original.current as PlotElement, [
           trace(data.original_points, "원본", originalColor, originalSizes, opacity),
           trace(data.reduced_points, "축소본", reducedColor, reducedSizes, opacity),
-        ], layout("원본 + 축소본", method), config));
+        ], layout("원본 + 축소본", method, data.axis_labels), config));
         return;
       }
       if (!reduced.current) return;
-      const left = await Plotly.newPlot(original.current as PlotElement, [trace(data.original_points, "원본", originalColor, originalSizes, opacity)], layout("원본", method), config);
-      const right = await Plotly.newPlot(reduced.current as PlotElement, [trace(data.reduced_points, "축소본", reducedColor, reducedSizes, opacity)], layout("축소본", method), config);
+      const left = await Plotly.newPlot(original.current as PlotElement, [trace(data.original_points, "원본", originalColor, originalSizes, opacity)], layout("원본", method, data.axis_labels), config);
+      const right = await Plotly.newPlot(reduced.current as PlotElement, [trace(data.reduced_points, "축소본", reducedColor, reducedSizes, opacity)], layout("축소본", method, data.axis_labels), config);
       plots.push(left, right);
       let syncing = false;
       const connect = (source: PlotElement, target: PlotElement) => source.on("plotly_relayout", (update) => {

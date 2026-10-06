@@ -30,6 +30,8 @@ export default function ScatterPlot({ data, source, originalColor, reducedColor,
 }) {
   const area = bounds(data);
   const method = data.projection_method.toUpperCase();
+  const xLabel = data.axis_labels?.[0] ?? `${method} 1`;
+  const yLabel = data.axis_labels?.[1] ?? `${method} 2`;
   const originalSizes = pointSizes(undefined, data.original_points.length, pointSize, false);
   const reducedSizes = pointSizes(data.reduced_weights, data.reduced_points.length, pointSize, weightByRepresentative);
   return <svg className="scatter-plot" viewBox="0 0 420 260" role="img" aria-label={`${method} 2D ${source} 산점도`}>
@@ -37,7 +39,7 @@ export default function ScatterPlot({ data, source, originalColor, reducedColor,
     <line className="scatter-axis" x1="32" x2="32" y1="28" y2="226" />
     {(source === "original" || source === "both") && <PointLayer points={data.original_points} area={area} className="scatter-point scatter-point--original" color={originalColor} sizes={originalSizes} opacity={opacity} />}
     {(source === "reduced" || source === "both") && <PointLayer points={data.reduced_points} area={area} className="scatter-point scatter-point--reduced" color={reducedColor} sizes={reducedSizes} opacity={opacity} />}
-    <text className="scatter-label" x="210" y="252" textAnchor="middle">{method} 1</text>
-    <text className="scatter-label" x="12" y="130" textAnchor="middle" transform="rotate(-90 12 130)">{method} 2</text>
+    <text className="scatter-label" x="210" y="252" textAnchor="middle">{xLabel}</text>
+    <text className="scatter-label" x="12" y="130" textAnchor="middle" transform="rotate(-90 12 130)">{yLabel}</text>
   </svg>;
 }

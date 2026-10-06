@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { ApiError, getBoxplot, getCategoryRatios, getHistogram, getVisualization, type BoxSummary, type BoxplotData, type CategoryRatioData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
+import { getBoxplot, getCategoryRatios, getHistogram, type BoxSummary, type BoxplotData, type CategoryRatioData, type GroupResult, type HistogramData, type ProjectionMethod, type VisualizationData } from "./api/client";
 import Boxplot from "./Boxplot";
 import CategoryRatio from "./CategoryRatio";
 import CorrelationHeatmaps from "./CorrelationHeatmaps";
 import CorrelationNetworks from "./CorrelationNetworks";
+import GraphAxisControls from "./GraphAxisControls";
 import GraphSettingsPanel from "./GraphSettingsPanel";
 import Histogram from "./Histogram";
 import ScatterPlot from "./ScatterPlot";
 import ThreeDScatter from "./ThreeDScatter";
 import useColumnGraph from "./useColumnGraph";
+import useAxisCompatibility from "./useAxisCompatibility";
+import useVisualization from "./useVisualization";
 import { defaultGraphSettings, type GraphKind, type GraphSettingValue } from "./graphSettings";
 import type { NetworkLayout } from "./networkLayout";
 
@@ -32,6 +35,16 @@ function GraphPlaceholder({ label }: { label: string }) {
 }
 
 type ColumnGraphData = HistogramData | BoxplotData | CategoryRatioData;
+
+function numericAxisColumns(group: GroupResult) {
+  const columns: unknown = group.detail.columns;
+  if (!Array.isArray(columns)) return [];
+  return columns.flatMap((column: unknown) => {
+    if (typeof column !== "object" || column === null) return [];
+    const item = column as { name?: unknown; kind?: unknown };
+    return item.kind === "numeric" && typeof item.name === "string" ? [item.name] : [];
+  });
+}
 
 // 소수부 6자리를 항상 남긴다 (정수부 자릿수 + 6을 유효숫자로 준다).
 // 소수점 자리로 자르면 위도 세 칸이 37.56/37.57/37.57로 뭉개지고,
@@ -90,6 +103,9 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
   const [kind, setKind] = useState<GraphKind>("scatter-2d");
   const [mode, setMode] = useState<ViewMode>("side");
   const [settings, setSettings] = useState(defaultGraphSettings);
+  const [xAxis, setXAxis] = useState("projection:0");
+  const [yAxis, setYAxis] = useState("projection:1");
+  const [zAxis, setZAxis] = useState("projection:2");
   const setGraphSetting = (key: string, value: GraphSettingValue) => setSettings((current) => {
     if (key === "palette") {
       const colors = value === "colorblind" ? ["#0072B2", "#D55E00"]
@@ -99,23 +115,14 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     return { ...current, [key]: value, ...(key === "originalColor" || key === "reducedColor" ? { palette: "custom" } : {}) };
   });
   const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
-  const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
+  const visual = useVisualization(jobId, group, kind, projection, xAxis, yAxis, zAxis);
   const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
   const boxplot = useColumnGraph(getBoxplot, jobId, group.name, kind === "boxplot");
   const category = useColumnGraph(getCategoryRatios, jobId, group.name, kind === "category-ratio");
   const graph = kind === "boxplot" ? boxplot : kind === "category-ratio" ? category : histogram;
-  useEffect(() => {
-    if (kind !== "scatter-2d" && kind !== "scatter-3d") return;
-    const controller = new AbortController();
-    setVisual({ loading: true });
-    getVisualization(jobId, { group: group.name, mode: "sample", max_points: 1500, projection_method: projection, projection_dimensions: kind === "scatter-3d" ? 3 : 2 }, { signal: controller.signal })
-      .then((data) => setVisual({ data, loading: false }))
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) setVisual({ loading: false, error: error instanceof ApiError ? error.message : "그래프 데이터를 불러오지 못했습니다" });
-      });
-    return () => controller.abort();
-  }, [group.name, jobId, kind, projection]);
   const label = GRAPH_LABELS[kind];
+  const axisColumns = numericAxisColumns(group);
+  useAxisCompatibility(axisColumns, xAxis, yAxis, zAxis, setXAxis, setYAxis, setZAxis);
   const pointSize = Number(settings.pointSize);
   const opacity = Number(settings.opacity);
   const weightByRepresentative = Boolean(settings.weightPointSize);
@@ -126,10 +133,18 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     <div className="graph-heading">
       <div><span>시각적 비교</span><h4 id="graph-title">원본과 축소본 그래프</h4></div>
       <div className="graph-controls">
-        <label>그래프 종류<select value={kind} onChange={(event) => setKind(event.target.value as GraphKind)}>
+        <label>그래프 종류<select value={kind} onChange={(event) => {
+          const next = event.target.value as GraphKind;
+          setKind(next);
+          if (next === "scatter-2d") {
+            if (xAxis === "projection:2") setXAxis("projection:0");
+            if (yAxis === "projection:2") setYAxis("projection:1");
+          }
+        }}>
           {Object.entries(GRAPH_LABELS).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
         </select></label>
         {(kind === "scatter-2d" || kind === "scatter-3d") && <label>투영 방식<select value={projection} onChange={(event) => setProjection(event.target.value as ProjectionMethod)}><option value="pca">PCA</option><option value="umap">UMAP</option></select></label>}
+        {(kind === "scatter-2d" || kind === "scatter-3d") && <GraphAxisControls kind={kind} projection={projection} columns={axisColumns} xAxis={xAxis} yAxis={yAxis} zAxis={zAxis} onXAxis={setXAxis} onYAxis={setYAxis} onZAxis={setZAxis} />}
         {byColumn && graph.data && <label>컬럼<select value={graph.column || graph.data.column} onChange={(event) => graph.setColumn(event.target.value)}>
           {graph.data.columns.map((name) => <option key={name} value={name}>{name}</option>)}
         </select></label>}

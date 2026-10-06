@@ -105,6 +105,9 @@ export type VisualizationOptions = {
   seed?: number;
   projection_method?: ProjectionMethod;
   projection_dimensions?: 2 | 3;
+  x_axis?: string;
+  y_axis?: string;
+  z_axis?: string;
 };
 export type ColumnGraphOptions = {
   group: string;
@@ -188,5 +191,8 @@ export type VisualizationData = {
   original_density: DensityGrid | null;
   reduced_points: number[][];
   reduced_weights?: number[];
+  reduced_indices?: number[];
+  axis_labels?: string[];
+  axis_columns?: string[];
   projection_method: ProjectionMethod;
 };
