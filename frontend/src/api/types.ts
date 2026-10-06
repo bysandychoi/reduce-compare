@@ -187,5 +187,6 @@ export type VisualizationData = {
   original_indices: number[];
   original_density: DensityGrid | null;
   reduced_points: number[][];
+  reduced_weights?: number[];
   projection_method: ProjectionMethod;
 };

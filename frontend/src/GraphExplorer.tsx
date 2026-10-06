@@ -79,8 +79,11 @@ function CategoryPanel({ data, source, title, originalColor, reducedColor }: { d
   return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><CategoryRatio data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
 }
 
-function ScatterPanel({ data, source, title, originalColor, reducedColor }: { data: VisualizationData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string }) {
-  return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
+function ScatterPanel({ data, source, title, originalColor, reducedColor, pointSize, opacity, weightByRepresentative }: {
+  data: VisualizationData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string;
+  pointSize: number; opacity: number; weightByRepresentative: boolean;
+}) {
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} pointSize={pointSize} opacity={opacity} weightByRepresentative={weightByRepresentative} /></div>;
 }
 
 export default function GraphExplorer({ jobId, group }: { jobId: string; group: GroupResult }) {
@@ -113,6 +116,9 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     return () => controller.abort();
   }, [group.name, jobId, kind, projection]);
   const label = GRAPH_LABELS[kind];
+  const pointSize = Number(settings.pointSize);
+  const opacity = Number(settings.opacity);
+  const weightByRepresentative = Boolean(settings.weightPointSize);
   const byColumn = kind === "histogram" || kind === "boxplot" || kind === "category-ratio";
   // shown은 로딩·오류·컬럼 전환 중에는 undefined다 (직전 컬럼 그래프가 남지 않게). 선택 상자는 data를 본다.
   const shown: ColumnGraphData | undefined = graph.shown;
@@ -138,8 +144,8 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
     <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : kind === "scatter-2d" || kind === "scatter-3d" ? visual.loading : undefined}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.error && <p className="graph-message graph-message--error">{visual.error}</p>}
-      {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /><ScatterPanel data={visual.data} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />)}
-      {kind === "scatter-3d" && visual.data && <ThreeDScatter data={visual.data} mode={mode} originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />}
+      {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} pointSize={pointSize} opacity={opacity} weightByRepresentative={weightByRepresentative} /><ScatterPanel data={visual.data} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} pointSize={pointSize} opacity={opacity} weightByRepresentative={weightByRepresentative} /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} pointSize={pointSize} opacity={opacity} weightByRepresentative={weightByRepresentative} />)}
+      {kind === "scatter-3d" && visual.data && <ThreeDScatter data={visual.data} mode={mode} originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} pointSize={pointSize} opacity={opacity} weightByRepresentative={weightByRepresentative} />}
       {byColumn && graph.loading && <p className="graph-message">{label}을(를) 계산하고 있습니다…</p>}
       {byColumn && graph.error && <p className="graph-message graph-message--error">{graph.error}</p>}
       {shown && "edges" in shown && (mode === "side"

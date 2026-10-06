@@ -10,7 +10,7 @@ from app.main import app
 client = TestClient(app)
 
 
-def _write_result(tmp_path, monkeypatch, count=100_000, method="pca"):
+def _write_result(tmp_path, monkeypatch, count=100_000, method="pca", weights=True):
     monkeypatch.setattr(jobs, "JOB_ROOT", tmp_path)
     job_id = "a" * 32
     directory = tmp_path / job_id
@@ -39,9 +39,10 @@ def _write_result(tmp_path, monkeypatch, count=100_000, method="pca"):
     features = np.column_stack([
         np.asarray(points), np.arange(count) % 7, np.arange(count) % 11,
     ])
-    np.savez_compressed(
-        source / "group-1.npz", original=features, reduced=features[::100],
-    )
+    arrays = {"original": features, "reduced": features[::100]}
+    if weights:
+        arrays["weights"] = np.arange(len(features[::100]), dtype=float) + 1
+    np.savez_compressed(source / "group-1.npz", **arrays)
     return job_id
 
 
@@ -59,7 +60,29 @@ def test_sample_mode_limits_points_and_keeps_indices(tmp_path, monkeypatch):
     assert payload["original_projected"] == 100_000
     assert len(payload["original_points"]) == len(payload["original_indices"]) == 300
     assert len(payload["reduced_points"]) == 300
+    selected = np.sort(np.random.default_rng(8).choice(1000, 300, replace=False))
+    assert payload["reduced_weights"] == (selected + 1).tolist()
     assert len(response.content) < 50_000
+
+
+def test_missing_representative_weights_fall_back_to_empty_list(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=100, weights=False)
+    response = client.get(f"/jobs/{job_id}/visualization", params={"group": "A"})
+
+    assert response.status_code == 200
+    assert response.json()["reduced_weights"] == []
+
+
+def test_misaligned_representative_weights_fall_back_to_empty_list(tmp_path, monkeypatch):
+    job_id = _write_result(tmp_path, monkeypatch, count=100, weights=False)
+    source_path = tmp_path / job_id / "projection-source" / "group-1.npz"
+    np.savez_compressed(
+        source_path, original=np.zeros((100, 4)), reduced=np.zeros((1, 4)), weights=[1, 2],
+    )
+    response = client.get(f"/jobs/{job_id}/visualization", params={"group": "A"})
+
+    assert response.status_code == 200
+    assert response.json()["reduced_weights"] == []
 
 
 def test_density_mode_has_bounded_grid_and_response(tmp_path, monkeypatch):

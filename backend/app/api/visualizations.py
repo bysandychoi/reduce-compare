@@ -32,6 +32,7 @@ class VisualizationData(BaseModel):
     original_indices: list[int] = Field(default_factory=list)
     original_density: DensityGrid | None = None
     reduced_points: list[list[float]]
+    reduced_weights: list[float] = Field(default_factory=list)
     projection_method: Literal["pca", "umap"]
 
 
@@ -64,10 +65,17 @@ def _density(points: list[list[float]], bins: int) -> DensityGrid:
 
 
 def build_visualization(group: GroupResult, mode: Literal["sample", "density"],
-                        max_points: int, bins: int, seed: int) -> VisualizationData:
+                        max_points: int, bins: int, seed: int,
+                        reduced_weights: np.ndarray | None = None) -> VisualizationData:
     """검증된 그룹 결과를 크기 제한이 있는 그래프 자료로 변환한다."""
     projection = group.projection
-    reduced, _ = _sample(projection.reduced, None, max_points, seed + 1)
+    reduced, reduced_indices = _sample(projection.reduced, None, max_points, seed + 1)
+    aligned_weights = None
+    if reduced_weights is not None:
+        candidate = np.asarray(reduced_weights, dtype=float)
+        if (candidate.ndim == 1 and len(candidate) == len(projection.reduced)
+                and np.isfinite(candidate).all() and (candidate > 0).all()):
+            aligned_weights = candidate[np.asarray(reduced_indices, dtype=int)].tolist()
     common = {
         "group": group.name,
         "mode": mode,
@@ -76,6 +84,7 @@ def build_visualization(group: GroupResult, mode: Literal["sample", "density"],
         "original_projected": len(projection.original),
         "reduced_rows": group.reduced_rows,
         "reduced_points": reduced,
+        "reduced_weights": aligned_weights or [],
         "projection_method": projection.method,
     }
     if mode == "density":
@@ -99,19 +108,27 @@ def get_visualization(
 ) -> VisualizationData:
     result = get_result(job_id)
     selected = _group(result, group)
+    group_index = next(i for i, item in enumerate(result.groups) if item.name == group)
+    source_path = job_directory(job_id) / "projection-source" / f"group-{group_index + 1}.npz"
+    weights = None
+    if source_path.is_file():
+        try:
+            with np.load(source_path) as source:
+                if "weights" in source.files:
+                    weights = np.asarray(source["weights"], dtype=float)
+        except (OSError, ValueError):
+            weights = None
     method = projection_method or selected.projection.method
     dimensions = projection_dimensions or selected.projection.dimensions
     if method != selected.projection.method or dimensions != selected.projection.dimensions:
-        index = next(i for i, item in enumerate(result.groups) if item.name == group)
-        path = job_directory(job_id) / "projection-source" / f"group-{index + 1}.npz"
-        if not path.is_file():
+        if not source_path.is_file():
             raise HTTPException(status.HTTP_409_CONFLICT, "투영 방식 전환 자료가 없습니다")
-        with np.load(path) as source:
+        with np.load(source_path) as source:
             projected = project_comparison(
                 source["original"], source["reduced"], method, dimensions, seed,
             )
         selected = selected.model_copy(update={"projection": _projection_model(projected)})
-    return build_visualization(selected, mode, max_points, bins, seed)
+    return build_visualization(selected, mode, max_points, bins, seed, weights)
 
 
 def _projection_model(projected: ProjectionResult):

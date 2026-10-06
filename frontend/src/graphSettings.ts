@@ -56,9 +56,14 @@ export const GRAPH_SETTING_SCHEMA: readonly GraphSettingDefinition[] = [
     min: 1, max: 12, step: .5, graphs: ["scatter-2d", "scatter-3d"],
   },
   {
+    type: "boolean", key: "weightPointSize", label: "대표 가중치로 크기 표시",
+    description: "축소본 점이 대표하는 행이 많을수록 크게 표시합니다.",
+    defaultValue: false, graphs: ["scatter-2d", "scatter-3d"],
+  },
+  {
     type: "range", key: "opacity", label: "투명도",
     description: "그래프 요소의 불투명도를 조절합니다.", defaultValue: .65,
-    min: .1, max: 1, step: .05, graphs: ALL_GRAPHS,
+    min: .1, max: 1, step: .05, graphs: ["scatter-2d", "scatter-3d"],
   },
   {
     type: "select", key: "networkLayout", label: "네트워크 배치",
