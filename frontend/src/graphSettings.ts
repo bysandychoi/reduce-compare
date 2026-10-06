@@ -31,14 +31,24 @@ const ALL_GRAPHS: readonly GraphKind[] = [
 
 export const GRAPH_SETTING_SCHEMA: readonly GraphSettingDefinition[] = [
   {
+    type: "select", key: "palette", label: "색상 팔레트",
+    description: "원본과 축소본을 구별할 색상 조합을 선택합니다.", defaultValue: "default",
+    options: [
+      { value: "default", label: "기본" },
+      { value: "colorblind", label: "색각친화" },
+      { value: "high-contrast", label: "고대비" },
+      { value: "custom", label: "사용자 지정" },
+    ], graphs: ["scatter-2d", "scatter-3d", "histogram", "boxplot", "category-ratio"],
+  },
+  {
     type: "color", key: "originalColor", label: "원본 색상",
     description: "원본 계열의 기본 색상입니다.", defaultValue: "#7c8794",
-    graphs: ALL_GRAPHS,
+    graphs: ["scatter-2d", "scatter-3d", "histogram", "boxplot", "category-ratio"],
   },
   {
     type: "color", key: "reducedColor", label: "축소본 색상",
     description: "축소본 계열의 기본 색상입니다.", defaultValue: "#176b9b",
-    graphs: ALL_GRAPHS,
+    graphs: ["scatter-2d", "scatter-3d", "histogram", "boxplot", "category-ratio"],
   },
   {
     type: "range", key: "pointSize", label: "점 크기",

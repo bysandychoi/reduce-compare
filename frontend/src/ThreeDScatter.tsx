@@ -21,7 +21,9 @@ function layout(title: string, method: string) {
   };
 }
 
-export default function ThreeDScatter({ data, mode }: { data: VisualizationData; mode: "side" | "overlay" }) {
+export default function ThreeDScatter({ data, mode, originalColor, reducedColor }: {
+  data: VisualizationData; mode: "side" | "overlay"; originalColor: string; reducedColor: string;
+}) {
   const original = useRef<HTMLDivElement>(null);
   const reduced = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -33,13 +35,13 @@ export default function ThreeDScatter({ data, mode }: { data: VisualizationData;
       const config = { responsive: true, displaylogo: false };
       if (mode === "overlay") {
         plots.push(await Plotly.newPlot(original.current as PlotElement, [
-          trace(data.original_points, "원본", "#7c8794"), trace(data.reduced_points, "축소본", "#176b9b"),
+          trace(data.original_points, "원본", originalColor), trace(data.reduced_points, "축소본", reducedColor),
         ], layout("원본 + 축소본", method), config));
         return;
       }
       if (!reduced.current) return;
-      const left = await Plotly.newPlot(original.current as PlotElement, [trace(data.original_points, "원본", "#7c8794")], layout("원본", method), config);
-      const right = await Plotly.newPlot(reduced.current as PlotElement, [trace(data.reduced_points, "축소본", "#176b9b")], layout("축소본", method), config);
+      const left = await Plotly.newPlot(original.current as PlotElement, [trace(data.original_points, "원본", originalColor)], layout("원본", method), config);
+      const right = await Plotly.newPlot(reduced.current as PlotElement, [trace(data.reduced_points, "축소본", reducedColor)], layout("축소본", method), config);
       plots.push(left, right);
       let syncing = false;
       const connect = (source: PlotElement, target: PlotElement) => source.on("plotly_relayout", (update) => {
@@ -54,6 +56,6 @@ export default function ThreeDScatter({ data, mode }: { data: VisualizationData;
       cancelled = true;
       void import("plotly.js-dist-min").then(({ default: Plotly }) => plots.forEach((plot) => Plotly.purge(plot)));
     };
-  }, [data, mode]);
+  }, [data, mode, originalColor, reducedColor]);
   return <>{<div className="scatter-3d" ref={original} />}{mode === "side" && <div className="scatter-3d" ref={reduced} />}</>;
 }

@@ -52,11 +52,11 @@ function boxCaption(box: BoxSummary) {
   return `${box.rows.toLocaleString()}행 · Q1 ${number(box.q1)} · 중앙값 ${number(box.median)} · Q3 ${number(box.q3)} · ${shown}`;
 }
 
-function BoxplotPanel({ data, source, title }: { data: BoxplotData; source: "original" | "reduced" | "both"; title: string }) {
+function BoxplotPanel({ data, source, title, originalColor, reducedColor }: { data: BoxplotData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string }) {
   const caption = source === "both"
     ? `원본 ${boxCaption(data.original)} / 축소본 ${boxCaption(data.reduced)}`
     : boxCaption(source === "reduced" ? data.reduced : data.original);
-  return <div className="scatter-panel"><div><strong>{title}</strong><span>{caption}</span></div><Boxplot data={data} source={source} /></div>;
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{caption}</span></div><Boxplot data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
 }
 
 function ColumnGraphNotes({ data }: { data: ColumnGraphData }) {
@@ -67,26 +67,34 @@ function ColumnGraphNotes({ data }: { data: ColumnGraphData }) {
   </>;
 }
 
-function HistogramPanel({ data, source, title }: { data: HistogramData; source: "original" | "reduced" | "both"; title: string }) {
+function HistogramPanel({ data, source, title, originalColor, reducedColor }: { data: HistogramData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string }) {
   const rows = source === "reduced" ? data.reduced_rows
     : source === "original" ? data.original_rows : data.original_rows + data.reduced_rows;
-  return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><Histogram data={data} source={source} /></div>;
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><Histogram data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
 }
 
-function CategoryPanel({ data, source, title }: { data: CategoryRatioData; source: "original" | "reduced" | "both"; title: string }) {
+function CategoryPanel({ data, source, title, originalColor, reducedColor }: { data: CategoryRatioData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string }) {
   const rows = source === "reduced" ? data.reduced_rows
     : source === "original" ? data.original_rows : data.original_rows + data.reduced_rows;
-  return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><CategoryRatio data={data} source={source} /></div>;
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{rows.toLocaleString()}행</span></div><CategoryRatio data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
 }
 
-function ScatterPanel({ data, source, title }: { data: VisualizationData; source: "original" | "reduced" | "both"; title: string }) {
-  return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} /></div>;
+function ScatterPanel({ data, source, title, originalColor, reducedColor }: { data: VisualizationData; source: "original" | "reduced" | "both"; title: string; originalColor: string; reducedColor: string }) {
+  return <div className="scatter-panel"><div><strong>{title}</strong><span>{source === "original" ? data.original_points.length : source === "reduced" ? data.reduced_points.length : data.original_points.length + data.reduced_points.length}개 점</span></div><ScatterPlot data={data} source={source} originalColor={originalColor} reducedColor={reducedColor} /></div>;
 }
 
 export default function GraphExplorer({ jobId, group }: { jobId: string; group: GroupResult }) {
   const [kind, setKind] = useState<GraphKind>("scatter-2d");
   const [mode, setMode] = useState<ViewMode>("side");
   const [settings, setSettings] = useState(defaultGraphSettings);
+  const setGraphSetting = (key: string, value: GraphSettingValue) => setSettings((current) => {
+    if (key === "palette") {
+      const colors = value === "colorblind" ? ["#0072B2", "#D55E00"]
+        : value === "high-contrast" ? ["#111111", "#E69F00"] : ["#7c8794", "#176b9b"];
+      return { ...current, palette: value, originalColor: colors[0], reducedColor: colors[1] };
+    }
+    return { ...current, [key]: value, ...(key === "originalColor" || key === "reducedColor" ? { palette: "custom" } : {}) };
+  });
   const [projection, setProjection] = useState<ProjectionMethod>(group.projection.method as ProjectionMethod);
   const [visual, setVisual] = useState<{ data?: VisualizationData; error?: string; loading: boolean }>({ loading: true });
   const histogram = useColumnGraph(getHistogram, jobId, group.name, kind === "histogram");
@@ -125,25 +133,24 @@ export default function GraphExplorer({ jobId, group }: { jobId: string; group: 
         </fieldset>}
       </div>
     </div>
-    <GraphSettingsPanel graph={kind} settings={settings}
-      onChange={(key: string, value: GraphSettingValue) => setSettings((current) => ({ ...current, [key]: value }))} />
+    <GraphSettingsPanel graph={kind} settings={settings} onChange={setGraphSetting} />
     {shown && <ColumnGraphNotes data={shown} />}
     <div className={`graph-stage graph-stage--${mode}`} aria-live="polite" aria-busy={byColumn ? graph.loading : kind === "scatter-2d" || kind === "scatter-3d" ? visual.loading : undefined}>
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.loading && <p className="graph-message">{projection.toUpperCase()} 좌표를 준비하고 있습니다…</p>}
       {(kind === "scatter-2d" || kind === "scatter-3d") && visual.error && <p className="graph-message graph-message--error">{visual.error}</p>}
-      {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" /><ScatterPanel data={visual.data} source="reduced" title="축소본" /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" />)}
-      {kind === "scatter-3d" && visual.data && <ThreeDScatter data={visual.data} mode={mode} />}
+      {kind === "scatter-2d" && visual.data && (mode === "side" ? <><ScatterPanel data={visual.data} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /><ScatterPanel data={visual.data} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /></> : <ScatterPanel data={visual.data} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />)}
+      {kind === "scatter-3d" && visual.data && <ThreeDScatter data={visual.data} mode={mode} originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />}
       {byColumn && graph.loading && <p className="graph-message">{label}을(를) 계산하고 있습니다…</p>}
       {byColumn && graph.error && <p className="graph-message graph-message--error">{graph.error}</p>}
       {shown && "edges" in shown && (mode === "side"
-        ? <><HistogramPanel data={shown} source="original" title="원본" /><HistogramPanel data={shown} source="reduced" title="축소본" /></>
-        : <HistogramPanel data={shown} source="both" title="원본 + 축소본" />)}
+        ? <><HistogramPanel data={shown} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /><HistogramPanel data={shown} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /></>
+        : <HistogramPanel data={shown} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />)}
       {shown && "categories" in shown && (mode === "side"
-        ? <><CategoryPanel data={shown} source="original" title="원본" /><CategoryPanel data={shown} source="reduced" title="축소본" /></>
-        : <CategoryPanel data={shown} source="both" title="원본 + 축소본" />)}
+        ? <><CategoryPanel data={shown} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /><CategoryPanel data={shown} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /></>
+        : <CategoryPanel data={shown} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />)}
       {shown && !("edges" in shown) && !("categories" in shown) && (mode === "side"
-        ? <><BoxplotPanel data={shown} source="original" title="원본" /><BoxplotPanel data={shown} source="reduced" title="축소본" /></>
-        : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" />)}
+        ? <><BoxplotPanel data={shown} source="original" title="원본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /><BoxplotPanel data={shown} source="reduced" title="축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} /></>
+        : <BoxplotPanel data={shown} source="both" title="원본 + 축소본" originalColor={String(settings.originalColor)} reducedColor={String(settings.reducedColor)} />)}
       {kind === "correlation-heatmap" && <CorrelationHeatmaps group={group} />}
       {kind === "network" && <CorrelationNetworks jobId={jobId} group={group.name}
         threshold={Number(settings.correlationThreshold)} layout={settings.networkLayout as NetworkLayout} />}
