@@ -70,7 +70,7 @@ def test_failed_run_has_stage_and_reason(tmp_path, monkeypatch, reason):
     result_response = client.get(f"/jobs/{job_id}/result")
     message = status_response.json()["error"]
     expected_reason = reason or "알 수 없는 오류"
-    assert message == f"축소 및 평가 단계에서 실패했습니다: {expected_reason}"
+    assert message == f"파일 및 스키마 확인 중 단계에서 실패했습니다: {expected_reason}"
     assert result_response.status_code == 409
     assert message in result_response.json()["detail"]
 
@@ -86,7 +86,7 @@ def test_failed_run_hides_unexpected_exception_details(tmp_path, monkeypatch):
     runs.RUNS[job_id].result(timeout=5)
 
     message = client.get(f"/jobs/{job_id}/status").json()["error"]
-    assert message == "축소 및 평가 단계에서 실패했습니다: 내부 처리 오류가 발생했습니다"
+    assert message == "파일 및 스키마 확인 중 단계에서 실패했습니다: 내부 처리 오류가 발생했습니다"
     assert str(tmp_path) not in message
 
 
@@ -101,7 +101,7 @@ def test_failed_run_redacts_path_from_validation_error(tmp_path, monkeypatch):
     runs.RUNS[job_id].result(timeout=5)
 
     message = client.get(f"/jobs/{job_id}/status").json()["error"]
-    assert message == "축소 및 평가 단계에서 실패했습니다: 읽기 실패: <로컬 경로>"
+    assert message == "파일 및 스키마 확인 중 단계에서 실패했습니다: 읽기 실패: <로컬 경로>"
     assert str(tmp_path) not in message
 
 

@@ -39,21 +39,25 @@ def test_status_reports_running_stage_and_failure(tmp_path, monkeypatch):
         release.wait(timeout=5)
         raise ValueError("의도한 실패")
 
-    monkeypatch.setattr(runs, "run_folder_pipeline", blocked)
+    def progressing(_folder, progress_callback, **_options):
+        progress_callback("그룹 A · 크기 탐색 중", 0.4)
+        return blocked()
+
+    monkeypatch.setattr(runs, "run_folder_pipeline", progressing)
     client.post(f"/jobs/{job_id}/run")
     assert entered.wait(timeout=1)
     running = client.get(f"/jobs/{job_id}/status").json()
     assert (running["state"], running["progress"], running["stage"]) == (
-        "running", 20, "축소 및 평가",
+        "running", 46, "그룹 A · 크기 탐색 중",
     )
 
     release.set()
     runs.RUNS[job_id].result(timeout=5)
     failed = client.get(f"/jobs/{job_id}/status").json()
     assert failed["state"] == "failed"
-    assert failed["progress"] == 20
+    assert failed["progress"] == 46
     assert failed["stage"] == "실패"
-    assert failed["error"] == "축소 및 평가 단계에서 실패했습니다: 의도한 실패"
+    assert failed["error"] == "그룹 A · 크기 탐색 중 단계에서 실패했습니다: 의도한 실패"
 
 
 def test_status_rejects_missing_job(tmp_path, monkeypatch):

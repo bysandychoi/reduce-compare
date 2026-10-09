@@ -47,6 +47,24 @@ class RunStatus(BaseModel):
     error: str | None = None
 
 
+class PipelineProgressWriter:
+    """Core pipeline progress callback that persists monotonic job state."""
+
+    def __init__(self, directory: Path, progress: int = 20,
+                 stage: str = "파일 및 스키마 확인 중") -> None:
+        self.directory = directory
+        self.progress = progress
+        self.stage = stage
+
+    def __call__(self, stage: str, fraction: float) -> None:
+        bounded = max(0.0, min(1.0, fraction))
+        self.progress = max(self.progress, min(85, 20 + round(65 * bounded)))
+        self.stage = stage
+        _write_json(self.directory / "run.json", {
+            "state": "running", "progress": self.progress, "stage": self.stage,
+        })
+
+
 def _write_json(path: Path, payload: dict) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     for attempt in range(5):
@@ -126,43 +144,53 @@ def _configuration(job_id: str) -> tuple[Path, dict[str, list[str]], dict[str, b
     return directory, selections, saved_decisions(directory)
 
 
+def _write_failed_state(directory: Path, error: Exception, progress: int,
+                        stage: str, tracker: PipelineProgressWriter | None) -> None:
+    if tracker and tracker.progress > progress:
+        progress, stage = tracker.progress, tracker.stage
+    _write_json(directory / "run.json", {
+        "state": "failed", "progress": progress, "stage": "실패",
+        "error": _failure_message(stage, error),
+    })
+
+
 def _execute(job_id: str, directory: Path, options: RunOptions,
              selections: dict[str, list[str]], decisions: dict[str, bool]) -> None:
     progress = 10
     stage = "파이프라인 준비"
+    tracker = None
     try:
         _write_json(directory / "run.json", {
             "state": "running", "progress": progress, "stage": stage,
         })
         progress = 20
-        stage = "축소 및 평가"
+        stage = "파일 및 스키마 확인 중"
         _write_json(directory / "run.json", {
             "state": "running", "progress": progress, "stage": stage,
         })
+        tracker = PipelineProgressWriter(directory, progress, stage)
         core = run_folder_pipeline(
             str(directory / "uploads"), target=options.target, seed=options.seed,
             projection_method=options.projection_method,
             projection_dimensions=options.projection_dimensions,
             selections=selections, merge_decisions=decisions,
+            progress_callback=tracker,
         )
         core.folder = "uploads"
-        _save_reduced_frames(directory, core.groups)
-        _save_projection_sources(directory, core.groups)
         progress = 90
         stage = "결과 저장"
         _write_json(directory / "run.json", {
             "state": "running", "progress": progress, "stage": stage,
         })
+        _save_reduced_frames(directory, core.groups)
+        _save_projection_sources(directory, core.groups)
         result = json.loads(PipelineResults.from_core(core).model_dump_json())
         _write_json(directory / "result.json", result)
         _write_json(directory / "run.json", {
             "state": "done", "progress": 100, "stage": "완료",
         })
     except Exception as exc:
-        _write_json(directory / "run.json", {
-            "state": "failed", "progress": progress, "stage": "실패",
-            "error": _failure_message(stage, exc),
-        })
+        _write_failed_state(directory, exc, progress, stage, tracker)
 
 
 @router.post("/jobs/{job_id}/run", response_model=RunAccepted,

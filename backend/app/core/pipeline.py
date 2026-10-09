@@ -4,6 +4,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from threading import Lock
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,16 @@ DEFAULT_TARGET = 85.0       # 유사도 기준치 기본값 (T003 결정)
 MIN_SIZE, MAX_SIZE = 100, 50000
 SEARCH_WORKERS = 2
 _THREADPOOL_LIMIT_LOCK = Lock()
+ProgressCallback = Callable[[str, float], None]
+
+
+def _notify_progress(callback: ProgressCallback | None, stage: str, fraction: float) -> None:
+    if callback is None:
+        return
+    try:
+        callback(stage, fraction)
+    except ValueError as exc:
+        raise RuntimeError("파이프라인 진행률 콜백에 실패했습니다") from exc
 
 
 @dataclass
@@ -165,18 +176,26 @@ def choose_method(df: pd.DataFrame, x: np.ndarray, columns: list[ColumnInfo], se
 def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TARGET,
                        seed: int = 0, projection_method: str = "pca",
                        projection_dimensions: int = 2,
-                       selected: list[str] | None = None) -> GroupPipelineResult:
+                       selected: list[str] | None = None,
+                       progress_callback: ProgressCallback | None = None) -> GroupPipelineResult:
     """한 스키마 그룹을 병합부터 투영까지 실행한다."""
+    def report(stage: str, fraction: float) -> None:
+        _notify_progress(progress_callback, f"그룹 {name} · {stage}", fraction)
+
+    report("병합 및 전처리 중", 0.0)
     frame = merge_group(group.files)
     prepared = prepare_group(frame, group.columns, selected)
+    report("크기 탐색 중", 0.15)
     sized, curve = search_size(
         prepared.frame, prepared.features, group.columns, prepared.used_columns,
         target=target, seed=seed,
     )
+    report("크기 탐색 완료 · 방식 비교 중", 0.62)
     chosen, methods = choose_method(
         prepared.frame, prepared.features, group.columns, prepared.used_columns,
         sized.size, seed=seed,
     )
+    report("방식 비교 완료 · 투영 중", 0.82)
     reduced_features = (
         prepared.features[chosen.reduction.indices]
         if len(chosen.reduction.indices)
@@ -186,6 +205,7 @@ def run_group_pipeline(group: SchemaGroup, name: str, target: float = DEFAULT_TA
         prepared.features, reduced_features, method=projection_method,
         dimensions=projection_dimensions, seed=seed,
     )
+    report("투영 완료", 1.0)
     return GroupPipelineResult(
         name=name, files=[item.name for item in group.files], original_rows=len(frame),
         prepared=prepared, chosen=chosen, size_curve=curve, method_scores=methods,
@@ -197,8 +217,13 @@ def run_folder_pipeline(folder: str, target: float = DEFAULT_TARGET, seed: int =
                         projection_method: str = "pca",
                         projection_dimensions: int = 2,
                         selections: dict[str, list[str]] | None = None,
-                        merge_decisions: dict[str, bool] | None = None) -> PipelineResult:
+                        merge_decisions: dict[str, bool] | None = None,
+                        progress_callback: ProgressCallback | None = None) -> PipelineResult:
     """폴더의 표 파일을 스키마별로 묶어 전체 축소 파이프라인을 실행한다."""
+    def report(stage: str, fraction: float) -> None:
+        _notify_progress(progress_callback, stage, fraction)
+
+    report("파일 및 스키마 확인 중", 0.02)
     files = collect_csv_files(folder)
     if not files:
         raise ValueError(f"읽을 수 있는 표 파일을 찾지 못했습니다: {folder}")
@@ -216,14 +241,23 @@ def run_folder_pipeline(folder: str, target: float = DEFAULT_TARGET, seed: int =
                     key=group.key, files=[file], columns=group.columns, merge=False,
                 )
                 work.append((f"{group_id}-file-{file_index}", group_id, single))
-    for name, group_id, group in work:
+    for work_index, (name, group_id, group) in enumerate(work):
+        start = 0.1 + 0.8 * work_index / max(len(work), 1)
+        group_span = 0.8 / max(len(work), 1)
+
+        def group_progress(stage: str, fraction: float,
+                           group_start: float = start, span: float = group_span) -> None:
+            report(stage, group_start + span * fraction)
+
         try:
             completed = run_group_pipeline(
                 group, name, target, seed, projection_method, projection_dimensions,
-                (selections or {}).get(group_id),
+                (selections or {}).get(group_id), group_progress,
             )
             result.groups.append(completed)
         except ValueError as exc:
             result.skipped.append({"name": name, "files": [f.name for f in group.files],
                                    "reason": str(exc)})
+            group_progress(f"그룹 {name} 건너뜀", 1.0)
+    report("파이프라인 분석 완료", 1.0)
     return result

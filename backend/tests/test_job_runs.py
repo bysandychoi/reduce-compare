@@ -1,6 +1,7 @@
 """백그라운드 축소 실행 API 테스트 (T062)."""
 import json
 import threading
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
@@ -91,6 +92,29 @@ def test_background_run_writes_result_and_done_state(tmp_path, monkeypatch):
     assert state == {"state": "done", "progress": 100, "stage": "완료"}
     assert result["folder"] == "uploads"
     assert result["groups"][0]["original_rows"] == 80
+
+
+def test_save_failure_reports_result_saving_stage(tmp_path, monkeypatch):
+    job_id = _create_job(tmp_path, monkeypatch)
+
+    def completed(_folder, progress_callback, **_options):
+        progress_callback("파이프라인 분석 완료", 1.0)
+        return SimpleNamespace(folder="", groups=[])
+
+    def fail_save(*_args):
+        raise OSError("write failed")
+
+    monkeypatch.setattr(runs, "run_folder_pipeline", completed)
+    monkeypatch.setattr(runs, "_save_reduced_frames", fail_save)
+    client.post(f"/jobs/{job_id}/run")
+    runs.RUNS[job_id].result(timeout=5)
+
+    state = json.loads((tmp_path / job_id / "run.json").read_text(encoding="utf-8"))
+    assert state["state"] == "failed"
+    assert state["progress"] == 90
+    assert state["error"] == (
+        "결과 저장 단계에서 실패했습니다: 입력 또는 결과 파일을 읽고 쓰지 못했습니다"
+    )
 
 
 def test_run_rejects_missing_job(tmp_path, monkeypatch):

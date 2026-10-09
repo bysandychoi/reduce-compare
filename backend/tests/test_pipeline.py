@@ -37,16 +37,53 @@ def test_folder_pipeline_returns_end_to_end_group_result(tmp_path):
     assert group.size_curve
 
 
+def test_folder_pipeline_reports_monotonic_stage_progress(tmp_path):
+    _write_sample(tmp_path, "first.csv", 1)
+    _write_sample(tmp_path, "second.csv", 2)
+    events = []
+
+    result = run_folder_pipeline(
+        str(tmp_path), target=0, seed=5,
+        progress_callback=lambda stage, fraction: events.append((stage, fraction)),
+    )
+
+    assert result.skipped == []
+    assert [fraction for _stage, fraction in events] == sorted(
+        fraction for _stage, fraction in events
+    )
+    assert events[0][0] == "파일 및 스키마 확인 중"
+    assert any(stage == "그룹 A · 크기 탐색 중" for stage, _ in events)
+    assert any(stage == "그룹 A · 방식 비교 완료 · 투영 중" for stage, _ in events)
+    assert events[-1] == ("파이프라인 분석 완료", 1.0)
+
+
+def test_progress_callback_failure_is_not_reported_as_skipped_group(tmp_path):
+    _write_sample(tmp_path, "data.csv", 1)
+
+    def fail_in_group(stage, _fraction):
+        if stage.startswith("그룹 "):
+            raise ValueError("progress store unavailable")
+
+    with pytest.raises(RuntimeError, match="진행률 콜백에 실패"):
+        run_folder_pipeline(str(tmp_path), progress_callback=fail_in_group)
+
+
 def test_invalid_group_is_reported_without_hiding_valid_group(tmp_path):
     _write_sample(tmp_path, "valid.csv", 3)
     pd.DataFrame({"constant": [1] * 20}).to_csv(tmp_path / "invalid.csv", index=False)
 
-    result = run_folder_pipeline(str(tmp_path), target=0)
+    events = []
+    result = run_folder_pipeline(
+        str(tmp_path), target=0,
+        progress_callback=lambda stage, fraction: events.append((stage, fraction)),
+    )
 
     assert len(result.groups) == 1
     assert len(result.skipped) == 1
     assert result.skipped[0]["files"] == ["invalid.csv"]
     assert "1개 이상" in result.skipped[0]["reason"]
+    assert any("건너뜀" in stage for stage, _ in events)
+    assert events[-1] == ("파이프라인 분석 완료", 1.0)
 
 
 def test_folder_pipeline_rejects_folder_without_tables(tmp_path):
